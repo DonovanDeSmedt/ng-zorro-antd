@@ -151,6 +151,7 @@ export class NzSelectComponent implements ControlValueAccessor, OnInit, AfterVie
   @Input() nzMaxMultipleCount = Infinity;
   @Input() nzDropdownStyle: { [ key: string ]: string; };
   @Input() nzNotFoundContent: string;
+  @Input() idClass: string;
   /** https://github.com/angular/angular/pull/13349/files **/
     // tslint:disable-next-line:no-any
   @Input() compareWith = (o1: any, o2: any) => o1 === o2;

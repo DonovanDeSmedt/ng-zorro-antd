@@ -4,7 +4,8 @@
   [class.ant-select-selection--single]="isSingleMode"
   [class.ant-select-selection--multiple]="isMultipleOrTags"
   (keydown)="onKeyDownCdkOverlayOrigin($event)"
-  tabindex="0">
+  tabindex="0"
+>
   <div
     nz-select-top-control
     [nzOpen]="nzOpen"
@@ -15,10 +16,15 @@
     [nzMode]="nzMode"
     [nzListTemplateOfOption]="listOfTemplateOption"
     [nzListOfSelectedValue]="listOfSelectedValue"
-    (nzOnSearch)="onSearch($event.value,$event.emit)"
-    (nzListOfSelectedValueChange)="updateListOfSelectedValueFromTopControl($event)">
-  </div>
-  <span *ngIf="nzAllowClear" class="ant-select-selection__clear" nz-select-unselectable (click)="onClearSelection($event)">
+    (nzOnSearch)="onSearch($event.value, $event.emit)"
+    (nzListOfSelectedValueChange)="updateListOfSelectedValueFromTopControl($event)"
+  ></div>
+  <span
+    *ngIf="nzAllowClear"
+    class="ant-select-selection__clear"
+    nz-select-unselectable
+    (click)="onClearSelection($event)"
+  >
     <i nz-icon type="close-circle" theme="fill" class="ant-select-close-icon"></i>
   </span>
   <span class="ant-select-arrow" nz-select-unselectable>
@@ -31,14 +37,20 @@
   [cdkConnectedOverlayHasBackdrop]="true"
   [cdkConnectedOverlayOrigin]="cdkOverlayOrigin"
   (backdropClick)="closeDropDown()"
-  (detach)="closeDropDown();"
+  (detach)="closeDropDown()"
   (positionChange)="onPositionChange($event)"
   [cdkConnectedOverlayWidth]="overlayWidth"
   [cdkConnectedOverlayMinWidth]="overlayMinWidth"
-  [cdkConnectedOverlayOpen]="!isDestroy">
-  <div [ngClass]="dropDownClassMap" [@dropDownAnimation]="nzOpen ? dropDownPosition : 'hidden' " [ngStyle]="nzDropdownStyle">
+  [cdkConnectedOverlayOpen]="!isDestroy"
+>
+  <div
+    [ngClass]="dropDownClassMap"
+    [@dropDownAnimation]="nzOpen ? dropDownPosition : 'hidden'"
+    [ngStyle]="nzDropdownStyle"
+  >
     <div
       style="overflow: auto"
+      [id]="idClass"
       nz-option-container
       [listOfNzOptionComponent]="listOfNzOptionComponent"
       [listOfNzOptionGroupComponent]="listOfNzOptionGroupComponent"
@@ -53,8 +65,8 @@
       (nzClickOption)="onClickOptionFromOptionContainer()"
       (nzListOfTemplateOptionChange)="listOfTemplateOptionChange($event)"
       (nzListOfSelectedValueChange)="updateListOfSelectedValueFromOptionContainer($event)"
-      [nzListOfSelectedValue]="listOfSelectedValue">
-    </div>
+      [nzListOfSelectedValue]="listOfSelectedValue"
+    ></div>
   </div>
 </ng-template>
 <!--can not use ViewChild since it will match sub options in option group -->
