@@ -151,13 +151,11 @@ describe('radio', () => {
       expect(testComponent.value).toBe('A');
       expect(testComponent.modelChange).toHaveBeenCalledTimes(0);
     }));
-    it('should name work', fakeAsync(() => {
+    it('should name work', () => {
       testComponent.name = 'test';
       fixture.detectChanges();
-      tick();
-      fixture.detectChanges();
       expect(radios.every(radio => radio.nativeElement.querySelector('input').name === 'test')).toBe(true);
-    }));
+    });
   });
   describe('radio group disabled', () => {
     let fixture;
@@ -173,8 +171,6 @@ describe('radio', () => {
     });
     it('should group disable work', fakeAsync(() => {
       testComponent.disabled = true;
-      fixture.detectChanges();
-      flush();
       fixture.detectChanges();
       expect(testComponent.value).toBe('A');
       radios[ 1 ].nativeElement.click();
@@ -276,11 +272,9 @@ describe('radio', () => {
       expect(testComponent.formGroup.get('radioGroup').value).toBe('A');
       testComponent.disable();
       fixture.detectChanges();
-      flush();
+      tick();
       fixture.detectChanges();
       radios[ 1 ].nativeElement.click();
-      fixture.detectChanges();
-      flush();
       fixture.detectChanges();
       expect(testComponent.formGroup.get('radioGroup').value).toBe('A');
     }));
@@ -320,12 +314,10 @@ export class NzTestRadioButtonComponent {
   selector: 'nz-test-radio-group',
   template: `
     <nz-radio-group [(ngModel)]="value" [nzName]="name" [nzDisabled]="disabled" (ngModelChange)="modelChange($event)" [nzSize]="size">
-      <ng-container [ngClass]>
-        <label nz-radio-button nzValue="A">A</label>
-        <label nz-radio-button nzValue="B">B</label>
-        <label nz-radio-button nzValue="C">C</label>
-        <label nz-radio-button nzValue="D">D</label>
-      </ng-container>
+      <label nz-radio-button nzValue="A">A</label>
+      <label nz-radio-button nzValue="B">B</label>
+      <label nz-radio-button nzValue="C">C</label>
+      <label nz-radio-button nzValue="D">D</label>
     </nz-radio-group>`
 })
 

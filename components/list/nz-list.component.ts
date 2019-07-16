@@ -7,27 +7,28 @@ import {
   OnChanges,
   OnDestroy,
   OnInit,
-  TemplateRef,
-  ViewEncapsulation
+  TemplateRef
 } from '@angular/core';
 import { Subscription } from 'rxjs';
 
 import { NzUpdateHostClassService } from '../core/services/update-host-class.service';
-import { NzSizeLDSType } from '../core/types/size';
 import { InputBoolean } from '../core/util/convert';
 import { NzI18nService } from '../i18n/nz-i18n.service';
 
-import { NzListGrid } from './interface';
+import { ListSize, NzListGrid } from './interface';
 
 @Component({
   selector           : 'nz-list',
   templateUrl        : './nz-list.component.html',
   providers          : [ NzUpdateHostClassService ],
   preserveWhitespaces: false,
-  encapsulation      : ViewEncapsulation.None,
   changeDetection    : ChangeDetectionStrategy.OnPush,
   styles             : [ `
-    nz-list, nz-list nz-spin {
+    :host {
+      display: block;
+    }
+
+    nz-spin {
       display: block;
     }
   ` ]
@@ -45,9 +46,37 @@ export class NzListComponent implements OnInit, OnChanges, OnDestroy {
 
   @Input() nzGrid: NzListGrid;
 
-  @Input() nzHeader: string | TemplateRef<void>;
+  _isHeader = false;
+  _header = '';
+  _headerTpl: TemplateRef<void>;
 
-  @Input() nzFooter: string | TemplateRef<void>;
+  @Input()
+  set nzHeader(value: string | TemplateRef<void>) {
+    if (value instanceof TemplateRef) {
+      this._header = null;
+      this._headerTpl = value;
+    } else {
+      this._header = value;
+    }
+
+    this._isHeader = !!value;
+  }
+
+  _isFooter = false;
+  _footer = '';
+  _footerTpl: TemplateRef<void>;
+
+  @Input()
+  set nzFooter(value: string | TemplateRef<void>) {
+    if (value instanceof TemplateRef) {
+      this._footer = null;
+      this._footerTpl = value;
+    } else {
+      this._footer = value;
+    }
+
+    this._isFooter = !!value;
+  }
 
   @Input() nzItemLayout: 'vertical' | 'horizontal' = 'horizontal';
 
@@ -59,7 +88,7 @@ export class NzListComponent implements OnInit, OnChanges, OnDestroy {
 
   @Input() nzPagination: TemplateRef<void>;
 
-  @Input() nzSize: NzSizeLDSType = 'default';
+  @Input() nzSize: ListSize = 'default';
 
   @Input() @InputBoolean() nzSplit = true;
 
@@ -79,7 +108,7 @@ export class NzListComponent implements OnInit, OnChanges, OnDestroy {
       [ `${this.prefixCls}-bordered` ]                 : this.nzBordered,
       [ `${this.prefixCls}-loading` ]                  : this.nzLoading,
       [ `${this.prefixCls}-grid` ]                     : this.nzGrid,
-      [ `${this.prefixCls}-something-after-last-item` ]: !!(this.nzLoadMore || this.nzPagination || this.nzFooter)
+      [ `${this.prefixCls}-something-after-last-item` ]: !!(this.nzLoadMore || this.nzPagination || this._isFooter)
     };
     this.updateHostClassService.updateHostClass(this.el.nativeElement, classMap);
   }
@@ -94,7 +123,6 @@ export class NzListComponent implements OnInit, OnChanges, OnDestroy {
       this.locale = this.i18n.getLocaleData('Table');
       this.cd.detectChanges();
     });
-    this._setClassMap();
   }
 
   ngOnChanges(): void {

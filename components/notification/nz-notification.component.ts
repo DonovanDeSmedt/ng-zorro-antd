@@ -1,5 +1,11 @@
-import { animate, state, style, transition, trigger } from '@angular/animations';
-import { ChangeDetectorRef, Component, Input, ViewEncapsulation } from '@angular/core';
+import {
+  animate,
+  state,
+  style,
+  transition,
+  trigger
+} from '@angular/animations';
+import { Component, Input } from '@angular/core';
 
 import { NzMessageComponent } from '../message/nz-message.component';
 
@@ -7,7 +13,6 @@ import { NzNotificationContainerComponent } from './nz-notification-container.co
 import { NzNotificationDataFilled } from './nz-notification.definitions';
 
 @Component({
-  encapsulation      : ViewEncapsulation.None,
   selector           : 'nz-notification',
   preserveWhitespaces: false,
   animations         : [
@@ -37,13 +42,13 @@ import { NzNotificationDataFilled } from './nz-notification.definitions';
       ])
     ])
   ],
-  templateUrl        : './nz-notification.component.html'
+  templateUrl         : './nz-notification.component.html'
 })
 export class NzNotificationComponent extends NzMessageComponent {
   @Input() nzMessage: NzNotificationDataFilled;
 
-  constructor(private container: NzNotificationContainerComponent, protected cdr: ChangeDetectorRef) {
-    super(container, cdr);
+  constructor(private container: NzNotificationContainerComponent) {
+    super(container);
   }
 
   close(): void {
@@ -60,5 +65,6 @@ export class NzNotificationComponent extends NzMessageComponent {
     } else {
       return this.nzMessage.state;
     }
+
   }
 }

@@ -8,22 +8,18 @@ import {
 } from '@angular/animations';
 import {
   AfterViewInit,
-  ChangeDetectionStrategy,
   Component,
   ElementRef,
   EventEmitter,
   Input,
-  OnChanges,
   OnInit,
   Output,
   Renderer2,
-  SimpleChanges,
-  ViewChild,
-  ViewEncapsulation
+  ViewChild
 } from '@angular/core';
 
 export type TagType = 'default' | 'closeable' | 'checkable';
-import { InputBoolean } from '../core/util/convert';
+import { toBoolean } from '../core/util/convert';
 
 @Component({
   selector           : 'nz-tag',
@@ -40,26 +36,53 @@ import { InputBoolean } from '../core/util/convert';
       animate('300ms cubic-bezier(0.78, 0.14, 0.15, 0.86)')
     ])
   ]) ],
-  templateUrl        : './nz-tag.component.html',
-  changeDetection    : ChangeDetectionStrategy.OnPush,
-  encapsulation      : ViewEncapsulation.None
+  templateUrl        : './nz-tag.component.html'
 })
-export class NzTagComponent implements OnInit, OnChanges, AfterViewInit {
+export class NzTagComponent implements OnInit, AfterViewInit {
+  private _color: string;
+  private _checked = false;
+  private isPreset: boolean;
+  private _mode: TagType = 'default';
   classMap;
   closed = false;
+  @ViewChild('wrapperElement') wrapperElement: ElementRef;
+  @Output() nzAfterClose = new EventEmitter<void>();
+  @Output() nzOnClose = new EventEmitter<MouseEvent>();
+  @Output() nzCheckedChange = new EventEmitter<boolean>();
 
-  @ViewChild('wrapperElement') private wrapperElement: ElementRef;
+  @Input()
+  set nzMode(value: TagType) {
+    this._mode = value;
+    this.updateClassMap();
+  }
 
-  @Input() nzMode: TagType = 'default';
-  @Input() nzColor: string;
-  @Input() @InputBoolean() nzChecked: boolean = false;
-  @Output() readonly nzAfterClose = new EventEmitter<void>();
-  @Output() readonly nzOnClose = new EventEmitter<MouseEvent>();
-  @Output() readonly nzCheckedChange = new EventEmitter<boolean>();
+  get nzMode(): TagType {
+    return this._mode;
+  }
 
-  constructor(private renderer: Renderer2) { }
+  @Input()
+  set nzColor(value: string) {
+    this._color = value;
+    this.isPreset = this.isPresetColor(value);
+    this.updateClassMap();
+    this.updateColorStatus();
+  }
 
-  private isPresetColor(color?: string): boolean {
+  get nzColor(): string {
+    return this._color;
+  }
+
+  @Input()
+  set nzChecked(value: boolean) {
+    this._checked = toBoolean(value);
+    this.updateClassMap();
+  }
+
+  get nzChecked(): boolean {
+    return this._checked;
+  }
+
+  isPresetColor(color?: string): boolean {
     if (!color) {
       return false;
     }
@@ -69,32 +92,10 @@ export class NzTagComponent implements OnInit, OnChanges, AfterViewInit {
     );
   }
 
-  private updateClassMap(): void {
-    const isPresetColor = this.isPresetColor(this.nzColor);
-    this.classMap = {
-      [ `ant-tag` ]                  : true,
-      [ `ant-tag-has-color` ]        : this.nzColor && !isPresetColor,
-      [ `ant-tag-${this.nzColor}` ]  : isPresetColor,
-      [ `ant-tag-checkable` ]        : this.nzMode === 'checkable',
-      [ `ant-tag-checkable-checked` ]: this.nzChecked
-    };
-  }
-
-  private updateColorStatus(): void {
-    if (this.wrapperElement && this.nzColor) {
-      if (this.isPresetColor(this.nzColor)) {
-        this.renderer.removeStyle(this.wrapperElement.nativeElement, 'background-color');
-      } else {
-        this.renderer.setStyle(this.wrapperElement.nativeElement, 'background-color', this.nzColor);
-      }
-    }
-  }
-
   updateCheckedStatus(): void {
     if (this.nzMode === 'checkable') {
       this.nzChecked = !this.nzChecked;
       this.nzCheckedChange.emit(this.nzChecked);
-      this.updateClassMap();
     }
   }
 
@@ -111,14 +112,32 @@ export class NzTagComponent implements OnInit, OnChanges, AfterViewInit {
     }
   }
 
-  ngOnInit(): void {
-    this.updateClassMap();
+  updateClassMap(): void {
+    const isPresetColor = this.isPresetColor(this.nzColor);
+    this.classMap = {
+      [ `ant-tag` ]                  : true,
+      [ `ant-tag-has-color` ]        : this.nzColor && !isPresetColor,
+      [ `ant-tag-${this.nzColor}` ]  : isPresetColor,
+      [ `ant-tag-checkable` ]        : this.nzMode === 'checkable',
+      [ `ant-tag-checkable-checked` ]: this.nzChecked
+    };
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes.nzColor) {
-      this.updateColorStatus();
+  updateColorStatus(): void {
+    if (this.wrapperElement && this.nzColor) {
+      if (this.isPreset) {
+        this.renderer.removeStyle(this.wrapperElement.nativeElement, 'background-color');
+      } else {
+        this.renderer.setStyle(this.wrapperElement.nativeElement, 'background-color', this.nzColor);
+      }
     }
+  }
+
+  constructor(private renderer: Renderer2) {
+
+  }
+
+  ngOnInit(): void {
     this.updateClassMap();
   }
 

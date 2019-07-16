@@ -1,5 +1,4 @@
 import {
-  ChangeDetectionStrategy,
   Component,
   ElementRef,
   Host,
@@ -8,8 +7,8 @@ import {
   OnChanges,
   OnInit,
   Optional,
-  SimpleChange,
-  ViewEncapsulation
+  Renderer2,
+  SimpleChange
 } from '@angular/core';
 
 import { NzUpdateHostClassService } from '../core/services/update-host-class.service';
@@ -29,8 +28,6 @@ export interface EmbeddedProperty {
 @Component({
   selector           : 'nz-col',
   providers          : [ NzUpdateHostClassService ],
-  encapsulation      : ViewEncapsulation.None,
-  changeDetection    : ChangeDetectionStrategy.OnPush,
   preserveWhitespaces: false,
   templateUrl        : './nz-col.component.html'
 })
@@ -79,7 +76,7 @@ export class NzColComponent implements OnInit, OnChanges {
     listOfSizeInputName.forEach(name => {
       const sizeName = name.replace('nz', '').toLowerCase();
       if (isNotNil(this[ name ])) {
-        if ((typeof (this[ name ]) === 'number') || (typeof (this[ name ]) === 'string')) {
+        if ((typeof(this[ name ]) === 'number') || (typeof (this[ name ]) === 'string')) {
           listClassMap[ `${this.prefixCls}-${sizeName}-${this[ name ]}` ] = true;
         } else {
           listClassMap[ `${this.prefixCls}-${sizeName}-${this[ name ].span}` ] = this[ name ] && isNotNil(this[ name ].span);
@@ -102,7 +99,7 @@ export class NzColComponent implements OnInit, OnChanges {
     this.setClassMap();
   }
 
-  constructor(private nzUpdateHostClassService: NzUpdateHostClassService, private elementRef: ElementRef, @Optional() @Host() public nzRowComponent: NzRowComponent, @Optional() @Host() public nzRowDirective: NzRowDirective) {
+  constructor(private nzUpdateHostClassService: NzUpdateHostClassService, private elementRef: ElementRef, @Optional() @Host() public nzRowComponent: NzRowComponent, @Optional() @Host() public nzRowDirective: NzRowDirective, private renderer: Renderer2) {
   }
 
   ngOnInit(): void {

@@ -10,8 +10,7 @@ import {
   Input,
   OnDestroy,
   Output,
-  ViewChild,
-  ViewEncapsulation
+  ViewChild
 } from '@angular/core';
 import { fromEvent, Subscription } from 'rxjs';
 import { distinctUntilChanged, throttleTime } from 'rxjs/operators';
@@ -31,7 +30,6 @@ const sharpMatcherRegx = /#([^#]+)$/;
   selector           : 'nz-anchor',
   preserveWhitespaces: false,
   templateUrl        : './nz-anchor.component.html',
-  encapsulation      : ViewEncapsulation.None,
   changeDetection    : ChangeDetectionStrategy.OnPush
 })
 export class NzAnchorComponent implements OnDestroy, AfterViewInit {
@@ -39,10 +37,11 @@ export class NzAnchorComponent implements OnDestroy, AfterViewInit {
   private links: NzAnchorLinkComponent[] = [];
   private animating = false;
   private target: Element = null;
-  private scroll$: Subscription = null;
-  @ViewChild('ink') private ink: ElementRef;
+  scroll$: Subscription = null;
   visible = false;
   wrapperStyle: {} = { 'max-height': '100vh' };
+  @ViewChild('wrap') private wrap: ElementRef;
+  @ViewChild('ink') private ink: ElementRef;
 
   // region: fields
 
@@ -94,14 +93,14 @@ export class NzAnchorComponent implements OnDestroy, AfterViewInit {
   }
 
   @Input()
-  set nzTarget(el: string | Element) {
-    this.target = typeof el === 'string' ? this.doc.querySelector(el) : el;
+  set nzTarget(el: Element) {
+    this.target = el;
     this.registerScrollEvent();
   }
 
-  @Output() readonly nzClick: EventEmitter<string> = new EventEmitter();
+  @Output() nzClick: EventEmitter<string> = new EventEmitter();
 
-  @Output() readonly nzScroll: EventEmitter<NzAnchorLinkComponent> = new EventEmitter();
+  @Output() nzScroll: EventEmitter<NzAnchorLinkComponent> = new EventEmitter();
 
   // endregion
 
@@ -131,9 +130,8 @@ export class NzAnchorComponent implements OnDestroy, AfterViewInit {
 
   private registerScrollEvent(): void {
     this.removeListen();
-    this.scroll$ = fromEvent(this.getTarget(), 'scroll')
-      .pipe(throttleTime(50), distinctUntilChanged())
-      .subscribe(() => this.handleScroll());
+    this.scroll$ = fromEvent(this.getTarget(), 'scroll').pipe(throttleTime(50), distinctUntilChanged())
+    .subscribe(e => this.handleScroll());
     // 由于页面刷新时滚动条位置的记忆
     // 倒置在dom未渲染完成，导致计算不正确
     setTimeout(() => this.handleScroll());
@@ -189,21 +187,17 @@ export class NzAnchorComponent implements OnDestroy, AfterViewInit {
   }
 
   private clearActive(): void {
-    this.links.forEach(i => {
-      i.active = false;
-      i.markForCheck();
-    });
+    this.links.forEach(i => i.active = false);
   }
 
   private handleActive(comp: NzAnchorLinkComponent): void {
     this.clearActive();
 
     comp.active = true;
-    comp.markForCheck();
+    this.cd.detectChanges();
 
     const linkNode = (comp.el.nativeElement as HTMLDivElement).querySelector('.ant-anchor-link-title') as HTMLElement;
     this.ink.nativeElement.style.top = `${linkNode.offsetTop + linkNode.clientHeight / 2 - 4.5}px`;
-    this.cd.detectChanges();
 
     this.nzScroll.emit(comp);
   }

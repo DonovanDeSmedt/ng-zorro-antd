@@ -1,12 +1,9 @@
-import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/core';
+import { Component } from '@angular/core';
 
 @Component({
-  selector           : 'nz-form-split',
-  preserveWhitespaces: false,
-  encapsulation      : ViewEncapsulation.None,
-  changeDetection    : ChangeDetectionStrategy.OnPush,
-  templateUrl        : './nz-form-split.component.html',
-  host               : {
+  selector   : 'nz-form-split',
+  templateUrl: './nz-form-split.component.html',
+  host       : {
     '[class.ant-form-split]': 'true'
   }
 })

@@ -1,11 +1,15 @@
-import { animate, style, transition, trigger } from '@angular/animations';
-import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/core';
+import {
+  animate,
+  style,
+  transition,
+  trigger
+} from '@angular/animations';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { NzFormItemComponent } from './nz-form-item.component';
 
 @Component({
   selector           : 'nz-form-explain',
   preserveWhitespaces: false,
-  encapsulation      : ViewEncapsulation.None,
-  changeDetection    : ChangeDetectionStrategy.OnPush,
   animations         : [
     trigger('formExplainAnimation', [
       transition('void => *', [
@@ -35,10 +39,20 @@ import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/
     '[class.ant-form-explain]': 'true'
   },
   styles             : [
-      `nz-form-explain {
-      display: block;
+    `:host{
+      display:block;
     }`
   ]
 })
-export class NzFormExplainComponent {
+export class NzFormExplainComponent implements OnDestroy, OnInit {
+  constructor(private nzFormItemComponent: NzFormItemComponent) {
+  }
+
+  ngOnDestroy(): void {
+    this.nzFormItemComponent.disableHelp();
+  }
+
+  ngOnInit(): void {
+    this.nzFormItemComponent.enableHelp();
+  }
 }

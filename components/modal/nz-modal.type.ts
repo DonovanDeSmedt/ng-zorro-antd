@@ -21,7 +21,6 @@ export interface ModalOptions<T = any, R = any> { // tslint:disable-line:no-any
   nzContent?: string | TemplateRef<{}> | Type<T>;
   nzComponentParams?: Partial<T>;
   nzClosable?: boolean;
-  nzKeyboard?: boolean;
   nzMask?: boolean;
   nzMaskClosable?: boolean;
   nzMaskStyle?: object;

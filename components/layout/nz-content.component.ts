@@ -1,13 +1,11 @@
-import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/core';
+import { Component } from '@angular/core';
 
 @Component({
   selector           : 'nz-content',
   preserveWhitespaces: false,
-  changeDetection    : ChangeDetectionStrategy.OnPush,
-  encapsulation      : ViewEncapsulation.None,
   templateUrl        : './nz-content.component.html',
   styles             : [
-      `nz-content {
+    `:host {
       display: block;
     }`
   ],

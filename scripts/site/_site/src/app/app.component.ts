@@ -26,10 +26,9 @@ export class AppComponent implements OnInit, AfterViewInit {
   oldVersionList = [
     '0.5.x',
     '0.6.x',
-    '0.7.x',
-    '1.8.x'
+    '0.7.x'
   ];
-  currentVersion = '7.0.0-rc.3';
+  currentVersion = '1.8.1';
 
   @ViewChild('searchInput') searchInput: ElementRef<HTMLInputElement>;
 

@@ -1,99 +1,61 @@
 import {
   AfterContentInit,
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   ContentChild,
   ContentChildren,
-  ElementRef,
   Input,
-  OnChanges,
   OnDestroy,
   QueryList,
-  SimpleChanges,
-  TemplateRef,
-  ViewChild,
-  ViewEncapsulation
+  TemplateRef
 } from '@angular/core';
+
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
-import { reverseChildNodes } from '../core/dom/reverse';
 import { NzTimelineItemComponent } from './nz-timeline-item.component';
 
-export type NzTimelineMode = 'left' | 'alternate' | 'right';
-
 @Component({
-  changeDetection    : ChangeDetectionStrategy.OnPush,
-  encapsulation      : ViewEncapsulation.None,
-  preserveWhitespaces: false,
   selector           : 'nz-timeline',
+  preserveWhitespaces: false,
   templateUrl        : './nz-timeline.component.html'
 })
-export class NzTimelineComponent implements AfterContentInit, OnChanges, OnDestroy {
-  @ViewChild('timeline') timeline: ElementRef<HTMLElement>;
+export class NzTimelineComponent implements AfterContentInit, OnDestroy {
+  private _pending: string | boolean | TemplateRef<void>;
+  private unsubscribe$ = new Subject<void>();
+  isPendingString: boolean;
+  isPendingBoolean: boolean = false;
+
+  @Input()
+  set nzPending(value: string | boolean | TemplateRef<void>) {
+    this.isPendingString = !(value instanceof TemplateRef);
+    this.isPendingBoolean = value === true;
+    this._pending = value;
+  }
+
+  get nzPending(): string | boolean | TemplateRef<void> {
+    return this._pending;
+  }
+
   @ContentChildren(NzTimelineItemComponent) listOfTimeLine: QueryList<NzTimelineItemComponent>;
   @ContentChild('pending') _pendingContent: TemplateRef<void>;
 
-  @Input() nzMode: NzTimelineMode;
-  @Input() nzPending: string | boolean | TemplateRef<void>;
-  @Input() nzPendingDot: string | TemplateRef<void>;
-  @Input() nzReverse: boolean = false;
-
-  isPendingBoolean: boolean = false;
-
-  private destroy$ = new Subject<void>();
-
-  constructor(private cdr: ChangeDetectorRef) {}
-
-  ngOnChanges(changes: SimpleChanges): void {
-    const modeChanges = changes.nzMode;
-    const reverseChanges = changes.nzReverse;
-    const pendingChanges = changes.nzPending;
-
-    if (modeChanges && (modeChanges.previousValue !== modeChanges.currentValue || modeChanges.isFirstChange())) {
-      this.updateChildren();
-    }
-    if (reverseChanges && reverseChanges.previousValue !== reverseChanges.currentValue && !reverseChanges.isFirstChange()) {
-      this.reverseChildTimelineDots();
-    }
-    if (pendingChanges) {
-      this.isPendingBoolean = pendingChanges.currentValue === true;
-    }
-  }
-
-  ngAfterContentInit(): void {
-    this.updateChildren();
-    if (this.listOfTimeLine) {
-      this.listOfTimeLine.changes.pipe(takeUntil(this.destroy$)).subscribe(() => {
-        this.updateChildren();
-      });
+  updateChildrenTimeLine(): void {
+    if (this.listOfTimeLine && this.listOfTimeLine.length) {
+      this.listOfTimeLine.toArray().forEach((item, index) => item.isLast = index === this.listOfTimeLine.length - 1);
     }
   }
 
   ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
+    this.unsubscribe$.next();
+    this.unsubscribe$.complete();
   }
 
-  private updateChildren(): void {
-    if (this.listOfTimeLine && this.listOfTimeLine.length) {
-      const length = this.listOfTimeLine.length;
-      this.listOfTimeLine.toArray().forEach((item, index) => {
-        item.isLast = !this.nzReverse ? index === length - 1 : index === 0;
-        item.position = this.nzMode === 'left' || !this.nzMode
-          ? undefined
-          : this.nzMode === 'right'
-            ? 'right'
-            : this.nzMode === 'alternate' && index % 2 === 0 ? 'left' : 'right';
-        item.detectChanges();
+  ngAfterContentInit(): void {
+    this.updateChildrenTimeLine();
+    if (this.listOfTimeLine) {
+      this.listOfTimeLine.changes.pipe(takeUntil(this.unsubscribe$)).subscribe(() => {
+        this.updateChildrenTimeLine();
       });
-      this.cdr.markForCheck();
     }
-  }
-
-  private reverseChildTimelineDots(): void {
-    reverseChildNodes(this.timeline.nativeElement as HTMLElement);
-    this.updateChildren();
   }
 }

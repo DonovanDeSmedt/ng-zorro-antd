@@ -179,12 +179,10 @@ describe('checkbox', () => {
       flush();
       expect(testComponent.formGroup.get('checkbox').value).toBe(false);
       inputElement.click();
-      flush();
       fixture.detectChanges();
       expect(testComponent.formGroup.get('checkbox').value).toBe(true);
       testComponent.disable();
       inputElement.click();
-      flush();
       fixture.detectChanges();
       expect(testComponent.formGroup.get('checkbox').value).toBe(true);
     }));
@@ -230,7 +228,6 @@ describe('checkbox', () => {
       flush();
       fixture.detectChanges();
       inputElement.click();
-      flush();
       fixture.detectChanges();
       expect(JSON.stringify(testComponent.formGroup.get('checkboxGroup').value)).toBe(JSON.stringify([
         { label: 'Apple', value: 'Apple', checked: false },
@@ -258,7 +255,6 @@ describe('checkbox', () => {
     }));
     it('should onChange correct', fakeAsync(() => {
       inputElement.click();
-      flush();
       fixture.detectChanges();
       expect(testComponent.onChange).toHaveBeenCalledWith([]);
       expect(testComponent.onChange).toHaveBeenCalledTimes(1);

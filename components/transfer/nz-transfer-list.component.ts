@@ -1,19 +1,20 @@
 import {
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
+  DoCheck,
   ElementRef,
   EventEmitter,
   Input,
+  IterableDiffer,
+  IterableDiffers,
   OnChanges,
   OnInit,
   Output,
   SimpleChanges,
-  TemplateRef,
-  ViewEncapsulation
+  TemplateRef
 } from '@angular/core';
 
 import { NzUpdateHostClassService } from '../core/services/update-host-class.service';
+import { toBoolean } from '../core/util/convert';
 
 import { TransferItem } from './interface';
 
@@ -21,12 +22,12 @@ import { TransferItem } from './interface';
   selector           : 'nz-transfer-list',
   preserveWhitespaces: false,
   providers          : [ NzUpdateHostClassService ],
-  templateUrl        : './nz-transfer-list.component.html',
-  encapsulation      : ViewEncapsulation.None,
-  changeDetection    : ChangeDetectionStrategy.OnPush
+  templateUrl        : './nz-transfer-list.component.html'
 })
-export class NzTransferListComponent implements OnChanges, OnInit {
-  // #region fields
+export class NzTransferListComponent implements OnChanges, OnInit, DoCheck {
+  private _showSearch = false;
+
+  // region: fields
 
   @Input() direction = '';
   @Input() titleText = '';
@@ -36,8 +37,17 @@ export class NzTransferListComponent implements OnChanges, OnInit {
   @Input() itemUnit = '';
   @Input() itemsUnit = '';
   @Input() filter = '';
-  @Input() disabled: boolean;
-  @Input() showSearch: boolean;
+
+  // search
+  @Input()
+  set showSearch(value: boolean) {
+    this._showSearch = toBoolean(value);
+  }
+
+  get showSearch(): boolean {
+    return this._showSearch;
+  }
+
   @Input() searchPlaceholder: string;
   @Input() notFoundContent: string;
   @Input() filterOption: (inputValue: string, item: TransferItem) => boolean;
@@ -46,13 +56,13 @@ export class NzTransferListComponent implements OnChanges, OnInit {
   @Input() footer: TemplateRef<void>;
 
   // events
-  @Output() readonly handleSelectAll: EventEmitter<boolean> = new EventEmitter<boolean>();
-  @Output() readonly handleSelect: EventEmitter<TransferItem> = new EventEmitter();
-  @Output() readonly filterChange: EventEmitter<{ direction: string, value: string }> = new EventEmitter();
+  @Output() handleSelectAll: EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() handleSelect: EventEmitter<TransferItem> = new EventEmitter();
+  @Output() filterChange: EventEmitter<{ direction: string, value: string }> = new EventEmitter();
 
-  // #endregion
+  // endregion
 
-  // #region styles
+  // region: styles
 
   prefixCls = 'ant-transfer-list';
 
@@ -64,9 +74,9 @@ export class NzTransferListComponent implements OnChanges, OnInit {
     this.updateHostClassService.updateHostClass(this.el.nativeElement, classMap);
   }
 
-  // #endregion
+  // endregion
 
-  // #region select all
+  // region: select all
 
   stat = {
     checkAll  : false,
@@ -94,9 +104,9 @@ export class NzTransferListComponent implements OnChanges, OnInit {
     this.stat.checkHalf = this.stat.checkCount > 0 && !this.stat.checkAll;
   }
 
-  // #endregion
+  // endregion
 
-  // #region search
+  // region: search
 
   handleFilter(value: string): void {
     this.filter = value;
@@ -118,9 +128,12 @@ export class NzTransferListComponent implements OnChanges, OnInit {
     return item.title.includes(text);
   }
 
-  // #endregion
+  // endregion
 
-  constructor(private el: ElementRef, private updateHostClassService: NzUpdateHostClassService, private cdr: ChangeDetectorRef) {
+  listDiffer: IterableDiffer<{}>;
+
+  constructor(private el: ElementRef, private updateHostClassService: NzUpdateHostClassService, differs: IterableDiffers) {
+    this.listDiffer = differs.find([]).create(null);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -133,13 +146,15 @@ export class NzTransferListComponent implements OnChanges, OnInit {
     this.setClassMap();
   }
 
-  markForCheck(): void {
-    this.updateCheckStatus();
-    this.cdr.markForCheck();
+  ngDoCheck(): void {
+    const change = this.listDiffer.diff(this.dataSource);
+    if (change) {
+      this.updateCheckStatus();
+    }
   }
 
   _handleSelect(item: TransferItem): void {
-    if (this.disabled || item.disabled) {
+    if (item.disabled) {
       return;
     }
     item.checked = !item.checked;

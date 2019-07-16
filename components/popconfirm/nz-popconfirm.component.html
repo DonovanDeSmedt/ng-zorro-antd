@@ -17,10 +17,13 @@
         <div>
           <div class="ant-popover-inner-content">
             <div class="ant-popover-message">
-              <ng-container *nzStringTemplateOutlet="nzTitle">
+              <ng-container *ngIf="isTitleString; else titleTemplate">
                 <i nz-icon type="exclamation-circle" theme="fill"></i>
                 <div class="ant-popover-message-title">{{ nzTitle }}</div>
               </ng-container>
+              <ng-template #titleTemplate>
+                <ng-template [ngTemplateOutlet]="nzTitle"></ng-template>
+              </ng-template>
             </div>
             <div class="ant-popover-buttons">
               <button nz-button [nzSize]="'small'" (click)="onCancel()">
@@ -32,6 +35,7 @@
                 <ng-container *ngIf="!nzOkText">{{ 'Modal.okText' | nzI18n }}</ng-container>
               </button>
             </div>
+
           </div>
         </div>
       </div>

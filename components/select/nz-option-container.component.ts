@@ -18,9 +18,9 @@ import { NzOptionLiComponent } from './nz-option-li.component';
 import { defaultFilterOption, NzOptionPipe, TFilterOption } from './nz-option.pipe';
 
 @Component({
-  selector           : '[nz-option-container]',
+  selector: '[nz-option-container]',
   preserveWhitespaces: false,
-  templateUrl        : './nz-option-container.component.html'
+  templateUrl: './nz-option-container.component.html'
 })
 export class NzOptionContainerComponent implements AfterContentInit, OnDestroy {
   // tslint:disable-next-line:no-any
@@ -39,10 +39,10 @@ export class NzOptionContainerComponent implements AfterContentInit, OnDestroy {
   @Input() listOfNzOptionComponent: QueryList<NzOptionComponent>;
   @Input() listOfNzOptionGroupComponent: QueryList<NzOptionGroupComponent>;
   // tslint:disable-next-line:no-any
-  @Output() readonly nzListOfSelectedValueChange = new EventEmitter<any[]>();
-  @Output() readonly nzListOfTemplateOptionChange = new EventEmitter<NzOptionComponent[]>();
-  @Output() readonly nzClickOption = new EventEmitter<void>();
-  @Output() readonly nzScrollToBottom = new EventEmitter<void>();
+  @Output() nzListOfSelectedValueChange = new EventEmitter<any[]>();
+  @Output() nzListOfTemplateOptionChange = new EventEmitter<NzOptionComponent[]>();
+  @Output() nzClickOption = new EventEmitter<void>();
+  @Output() nzScrollToBottom = new EventEmitter<void>();
   @Input() nzMode = 'default';
   @Input() nzServerSearch = false;
   @Input() nzFilterOption: TFilterOption = defaultFilterOption;
@@ -50,6 +50,8 @@ export class NzOptionContainerComponent implements AfterContentInit, OnDestroy {
   @Input() nzNotFoundContent: string;
   // tslint:disable-next-line:no-any
   @Input() compareWith = (o1: any, o2: any) => o1 === o2;
+
+  @Input() idClass: string;
 
   @Input()
   set nzSearchValue(value: string) {
@@ -73,6 +75,19 @@ export class NzOptionContainerComponent implements AfterContentInit, OnDestroy {
     }
   }
 
+  formatId(option: string): string {
+    return `${this.idClass}-${option}`;
+  }
+
+  formatIdLi(option: NzOptionComponent): string {
+    const value = option && option.nzValue && option.nzValue.trim();
+    return `${this.idClass}-${value}`;
+  }
+
+  formatIdUl(): string {
+    return `${this.idClass}-list`;
+  }
+
   // tslint:disable-next-line:no-any
   get nzListOfSelectedValue(): any[] {
     return this._listOfSelectedValue;
@@ -80,7 +95,7 @@ export class NzOptionContainerComponent implements AfterContentInit, OnDestroy {
 
   addTagOption(): void {
     if (this.nzListOfSelectedValue.length < this.nzMaxMultipleCount) {
-      this.nzListOfSelectedValue = [ ...this.nzListOfSelectedValue, this.nzSearchValue ];
+      this.nzListOfSelectedValue = [...this.nzListOfSelectedValue, this.nzSearchValue];
       this.nzListOfSelectedValueChange.emit(this.nzListOfSelectedValue);
     }
   }
@@ -91,17 +106,17 @@ export class NzOptionContainerComponent implements AfterContentInit, OnDestroy {
   }
 
   onKeyDownUl(e: KeyboardEvent): void {
-    if ([ UP_ARROW, DOWN_ARROW, ENTER ].indexOf(e.keyCode) > -1) {
+    if ([UP_ARROW, DOWN_ARROW, ENTER].indexOf(e.keyCode) > -1) {
       e.preventDefault();
       const activeIndex = this.listOfFilterOption.findIndex(item => item === this.activatedOption);
       if (e.keyCode === UP_ARROW) {
         // arrow up
-        const preIndex = activeIndex > 0 ? (activeIndex - 1) : (this.listOfFilterOption.length - 1);
-        this.setActiveOption(this.listOfFilterOption[ preIndex ]);
+        const preIndex = activeIndex > 0 ? activeIndex - 1 : this.listOfFilterOption.length - 1;
+        this.setActiveOption(this.listOfFilterOption[preIndex]);
       } else if (e.keyCode === DOWN_ARROW) {
         // arrow down
-        const nextIndex = activeIndex < this.listOfFilterOption.length - 1 ? (activeIndex + 1) : 0;
-        this.setActiveOption(this.listOfFilterOption[ nextIndex ]);
+        const nextIndex = activeIndex < this.listOfFilterOption.length - 1 ? activeIndex + 1 : 0;
+        this.setActiveOption(this.listOfFilterOption[nextIndex]);
       } else if (e.keyCode === ENTER) {
         // enter
         if (this.isTagsMode) {
@@ -119,7 +134,9 @@ export class NzOptionContainerComponent implements AfterContentInit, OnDestroy {
   }
 
   resetActiveOption(): void {
-    const firstActiveOption = this.listOfAllTemplateOption.concat(this.listOfTagOption).find(item => this.compareWith(item.nzValue, this.nzListOfSelectedValue[ 0 ]));
+    const firstActiveOption = this.listOfAllTemplateOption
+      .concat(this.listOfTagOption)
+      .find(item => this.compareWith(item.nzValue, this.nzListOfSelectedValue[0]));
     this.setActiveOption(firstActiveOption);
   }
 
@@ -138,9 +155,9 @@ export class NzOptionContainerComponent implements AfterContentInit, OnDestroy {
     if (this.listOfNzOptionLiComponent && this.listOfNzOptionLiComponent.length) {
       const targetOption = this.listOfNzOptionLiComponent.find(o => o.nzOption === this.activatedOption);
       /* tslint:disable-next-line:no-string-literal */
-      if (targetOption && targetOption.el && targetOption.el[ 'scrollIntoViewIfNeeded' ]) {
+      if (targetOption && targetOption.el && targetOption.el['scrollIntoViewIfNeeded']) {
         /* tslint:disable-next-line:no-string-literal */
-        setTimeout(() => targetOption.el[ 'scrollIntoViewIfNeeded' ](false), 150);
+        setTimeout(() => targetOption.el['scrollIntoViewIfNeeded'](false), 150);
       }
     }
   }
@@ -150,7 +167,7 @@ export class NzOptionContainerComponent implements AfterContentInit, OnDestroy {
     if (option && !option.nzDisabled) {
       let changed = false;
       this.setActiveOption(option);
-      let listOfSelectedValue = [ ...this.nzListOfSelectedValue ];
+      let listOfSelectedValue = [...this.nzListOfSelectedValue];
       if (this.isMultipleOrTags) {
         const targetValue = listOfSelectedValue.find(o => this.compareWith(o, option.nzValue));
         if (isNotNil(targetValue)) {
@@ -163,8 +180,8 @@ export class NzOptionContainerComponent implements AfterContentInit, OnDestroy {
           listOfSelectedValue.push(option.nzValue);
           changed = true;
         }
-      } else if (!this.compareWith(listOfSelectedValue[ 0 ], option.nzValue)) {
-        listOfSelectedValue = [ option.nzValue ];
+      } else if (!this.compareWith(listOfSelectedValue[0], option.nzValue)) {
+        listOfSelectedValue = [option.nzValue];
         changed = true;
       }
       /** update selectedValues when click option **/
@@ -193,11 +210,16 @@ export class NzOptionContainerComponent implements AfterContentInit, OnDestroy {
       });
       this.listOfTagOption = listOfTagsOption;
     }
-
   }
 
   refreshListOfAllTemplateOption(): void {
-    this.listOfAllTemplateOption = this.listOfNzOptionComponent.toArray().concat(this.listOfNzOptionGroupComponent.toArray().reduce((pre, cur) => [ ...pre, ...cur.listOfNzOptionComponent.toArray() ], []));
+    this.listOfAllTemplateOption = this.listOfNzOptionComponent
+      .toArray()
+      .concat(
+        this.listOfNzOptionGroupComponent
+          .toArray()
+          .reduce((pre, cur) => [...pre, ...cur.listOfNzOptionComponent.toArray()], [])
+      );
     Promise.resolve().then(() => this.nzListOfTemplateOptionChange.emit(this.listOfAllTemplateOption));
   }
 
@@ -214,9 +236,14 @@ export class NzOptionContainerComponent implements AfterContentInit, OnDestroy {
   }
 
   updateListOfFilterOption(): void {
-    this.listOfFilterOption = new NzOptionPipe().transform(this.listOfAllTemplateOption.concat(this.listOfTagOption), this.nzSearchValue, this.nzFilterOption, this.nzServerSearch) as NzOptionComponent[];
+    this.listOfFilterOption = new NzOptionPipe().transform(
+      this.listOfAllTemplateOption.concat(this.listOfTagOption),
+      this.nzSearchValue,
+      this.nzFilterOption,
+      this.nzServerSearch
+    ) as NzOptionComponent[];
     if (this.nzSearchValue) {
-      this.setActiveOption(this.listOfFilterOption[ 0 ]);
+      this.setActiveOption(this.listOfFilterOption[0]);
     }
   }
 
@@ -229,7 +256,12 @@ export class NzOptionContainerComponent implements AfterContentInit, OnDestroy {
       this.listOfNzOptionComponent.changes
     );
     if (this.listOfNzOptionGroupComponent.length) {
-      this.listOfNzOptionGroupComponent.forEach(group => optionChanges$ = group.listOfNzOptionComponent ? merge(group.listOfNzOptionComponent.changes, optionChanges$) : optionChanges$);
+      this.listOfNzOptionGroupComponent.forEach(
+        group =>
+          (optionChanges$ = group.listOfNzOptionComponent
+            ? merge(group.listOfNzOptionComponent.changes, optionChanges$)
+            : optionChanges$)
+      );
     }
     this.optionSubscription = optionChanges$.subscribe(() => this.refreshAllOptionStatus(true));
   }
@@ -257,19 +289,19 @@ export class NzOptionContainerComponent implements AfterContentInit, OnDestroy {
   }
 
   get isNotFoundDisplay(): boolean {
-    return (!this.isTagsMode) && (!this.listOfFilterOption.length);
+    return !this.isTagsMode && !this.listOfFilterOption.length;
   }
 
   updateAddTagOptionDisplay(): void {
     const listOfAllOption = this.listOfAllTemplateOption.concat(this.listOfTagOption).map(item => item.nzLabel);
     const isMatch = listOfAllOption.indexOf(this.nzSearchValue) > -1;
-    this.isAddTagOptionDisplay = this.isTagsMode && this.nzSearchValue && (!isMatch);
+    this.isAddTagOptionDisplay = this.isTagsMode && this.nzSearchValue && !isMatch;
   }
 
   dropDownScroll(e: MouseEvent, ul: HTMLUListElement): void {
     e.preventDefault();
     e.stopPropagation();
-    if (ul && (ul.scrollHeight - ul.scrollTop === ul.clientHeight)) {
+    if (ul && ul.scrollHeight - ul.scrollTop === ul.clientHeight) {
       this.nzScrollToBottom.emit();
     }
   }

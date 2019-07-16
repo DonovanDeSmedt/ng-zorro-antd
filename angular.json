@@ -24,8 +24,7 @@
                 "glob": "**/*",
                 "input": "./node_modules/@ant-design/icons-angular/src/inline-svg/",
                 "output": "/assets/"
-              },
-              "site/src/manifest.json"
+              }
             ],
             "styles": [
               "site/src/styles.less"
@@ -50,8 +49,7 @@
               "aot": true,
               "extractLicenses": true,
               "vendorChunk": false,
-              "buildOptimizer": true,
-              "serviceWorker": true
+              "buildOptimizer": true
             }
           }
         },

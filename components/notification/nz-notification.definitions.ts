@@ -10,7 +10,6 @@ export interface NzNotificationData extends NzMessageData {
 }
 
 export interface NzNotificationDataOptions extends NzMessageDataOptions {
-  nzKey?: string;
   /* tslint:disable-next-line:no-any */
   nzStyle?: any;
   /* tslint:disable-next-line:no-any */

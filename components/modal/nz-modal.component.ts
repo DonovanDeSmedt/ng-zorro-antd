@@ -23,7 +23,7 @@ import {
   ViewContainerRef
 } from '@angular/core';
 
-import { fromEvent, Observable, Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 import { NzMeasureScrollbarService } from '../core/services/nz-measure-scrollbar.service';
@@ -31,7 +31,6 @@ import { NzMeasureScrollbarService } from '../core/services/nz-measure-scrollbar
 import { InputBoolean } from '../core/util/convert';
 import { NzI18nService } from '../i18n/nz-i18n.service';
 
-import { ESCAPE } from '@angular/cdk/keycodes';
 import ModalUtil from './modal-util';
 import { NzModalConfig, NZ_MODAL_CONFIG, NZ_MODAL_DEFAULT_CONFIG } from './nz-modal-config';
 import { NzModalControlService } from './nz-modal-control.service';
@@ -62,7 +61,7 @@ export class NzModalComponent<T = any, R = any> extends NzModalRef<T, R> impleme
   @Input() nzGetContainer: HTMLElement | OverlayRef | (() => HTMLElement | OverlayRef) = () => this.overlay.create(); // [STATIC]
 
   @Input() @InputBoolean() nzVisible: boolean = false;
-  @Output() readonly nzVisibleChange = new EventEmitter<boolean>();
+  @Output() nzVisibleChange = new EventEmitter<boolean>();
 
   @Input() nzZIndex: number = 1000;
   @Input() nzWidth: number | string = 520;
@@ -77,8 +76,8 @@ export class NzModalComponent<T = any, R = any> extends NzModalRef<T, R> impleme
   @Input() nzMaskStyle: object;
   @Input() nzBodyStyle: object;
 
-  @Output() readonly nzAfterOpen = new EventEmitter<void>(); // Trigger when modal open(visible) after animations
-  @Output() readonly nzAfterClose = new EventEmitter<R>(); // Trigger when modal leave-animation over
+  @Output() nzAfterOpen = new EventEmitter<void>(); // Trigger when modal open(visible) after animations
+  @Output() nzAfterClose = new EventEmitter<R>(); // Trigger when modal leave-animation over
   get afterOpen(): Observable<void> { // Observable alias for nzAfterOpen
     return this.nzAfterOpen.asObservable();
   }
@@ -96,7 +95,7 @@ export class NzModalComponent<T = any, R = any> extends NzModalRef<T, R> impleme
 
   @Input() nzOkType = 'primary';
   @Input() @InputBoolean() nzOkLoading: boolean = false;
-  @Input() @Output() readonly nzOnOk: EventEmitter<T> | OnClickCallback<T> = new EventEmitter<T>();
+  @Input() @Output() nzOnOk: EventEmitter<T> | OnClickCallback<T> = new EventEmitter<T>();
   @ViewChild('autoFocusButtonOk', { read: ElementRef }) autoFocusButtonOk: ElementRef; // Only aim to focus the ok button that needs to be auto focused
   @Input() nzCancelText: string;
 
@@ -105,11 +104,9 @@ export class NzModalComponent<T = any, R = any> extends NzModalRef<T, R> impleme
   }
 
   @Input() @InputBoolean() nzCancelLoading: boolean = false;
-  @Input() @Output() readonly nzOnCancel: EventEmitter<T> | OnClickCallback<T> = new EventEmitter<T>();
+  @Input() @Output() nzOnCancel: EventEmitter<T> | OnClickCallback<T> = new EventEmitter<T>();
   @ViewChild('modalContainer') modalContainer: ElementRef;
   @ViewChild('bodyContainer', { read: ViewContainerRef }) bodyContainer: ViewContainerRef;
-
-  @Input() @InputBoolean() nzKeyboard: boolean = true;
 
   get hidden(): boolean {
     return !this.nzVisible && !this.animationState;
@@ -142,8 +139,6 @@ export class NzModalComponent<T = any, R = any> extends NzModalRef<T, R> impleme
 
   ngOnInit(): void {
     this.i18n.localeChange.pipe(takeUntil(this.unsubscribe$)).subscribe(() => this.locale = this.i18n.getLocaleData('Modal'));
-
-    fromEvent<KeyboardEvent>(this.document.body, 'keydown').pipe(takeUntil(this.unsubscribe$)).subscribe(e => this.keydownListener(e));
 
     if (this.isComponent(this.nzContent)) {
       this.createDynamicComponent(this.nzContent as Type<T>); // Create component along without View
@@ -198,12 +193,6 @@ export class NzModalComponent<T = any, R = any> extends NzModalRef<T, R> impleme
       this.unsubscribe$.next();
       this.unsubscribe$.complete();
     });
-  }
-
-  keydownListener(event: KeyboardEvent): void {
-    if (event.keyCode === ESCAPE && this.nzKeyboard) {
-      this.onClickOkCancel('cancel');
-    }
   }
 
   open(): void {
@@ -477,8 +466,7 @@ export class NzModalComponent<T = any, R = any> extends NzModalRef<T, R> impleme
   }
 
   private restoreFocus(): void {
-    // We need the extra check, because IE can set the `activeElement` to null in some cases.
-    if (this.previouslyFocusedElement && typeof this.previouslyFocusedElement.focus === 'function') {
+    if (this.previouslyFocusedElement) {
       this.previouslyFocusedElement.focus();
     }
     if (this.focusTrap) {

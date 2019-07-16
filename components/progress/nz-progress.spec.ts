@@ -29,29 +29,24 @@ describe('progress', () => {
     });
     it('should percent work', () => {
       fixture.detectChanges();
-      expect(progress.nativeElement.querySelector('.ant-progress-bg').style.width).toBe('0%');
-      expect(progress.nativeElement.querySelector('.ant-progress-bg').style.height).toBe('8px');
+      expect(progress.nativeElement.querySelector('.ant-progress-bg').style.cssText).toBe('width: 0%; height: 8px;');
       expect(progress.nativeElement.querySelector('.ant-progress-text').innerText.trim()).toBe('0%');
       testComponent.percent = 50;
       fixture.detectChanges();
-      expect(progress.nativeElement.querySelector('.ant-progress-bg').style.width).toBe('50%');
-      expect(progress.nativeElement.querySelector('.ant-progress-bg').style.height).toBe('8px');
+      expect(progress.nativeElement.querySelector('.ant-progress-bg').style.cssText).toBe('width: 50%; height: 8px;');
       expect(progress.nativeElement.querySelector('.ant-progress-text').innerText.trim()).toBe('50%');
       testComponent.percent = 100;
       fixture.detectChanges();
-      expect(progress.nativeElement.querySelector('.ant-progress-bg').style.width).toBe('100%');
-      expect(progress.nativeElement.querySelector('.ant-progress-bg').style.height).toBe('8px');
+      expect(progress.nativeElement.querySelector('.ant-progress-bg').style.cssText).toBe('width: 100%; height: 8px;');
       expect(progress.nativeElement.querySelector('.ant-progress-text').innerText.trim()).toBe('');
       expect(progress.nativeElement.querySelector('.anticon-check-circle')).toBeDefined();
     });
     it('should successPercent', () => {
       fixture.detectChanges();
-      expect(progress.nativeElement.querySelector('.ant-progress-success-bg').style.width).toBe('0%');
-      expect(progress.nativeElement.querySelector('.ant-progress-success-bg').style.height).toBe('8px');
+      expect(progress.nativeElement.querySelector('.ant-progress-success-bg').style.cssText).toBe('width: 0%; height: 8px;');
       testComponent.successPercent = 50;
       fixture.detectChanges();
-      expect(progress.nativeElement.querySelector('.ant-progress-success-bg').style.width).toBe('50%');
-      expect(progress.nativeElement.querySelector('.ant-progress-success-bg').style.height).toBe('8px');
+      expect(progress.nativeElement.querySelector('.ant-progress-success-bg').style.cssText).toBe('width: 50%; height: 8px;');
     });
     it('should format work', () => {
       testComponent.format = (percent) => `${percent} percent`;
@@ -83,38 +78,22 @@ describe('progress', () => {
     });
     it('should strokeWidth work', () => {
       fixture.detectChanges();
-      expect(progress.nativeElement.querySelector('.ant-progress-bg').style.height).toBe('8px');
-      expect(progress.nativeElement.querySelector('.ant-progress-success-bg').style.height).toBe('8px');
+      expect(progress.nativeElement.querySelector('.ant-progress-bg').style.cssText).toBe('width: 0%; height: 8px;');
+      expect(progress.nativeElement.querySelector('.ant-progress-success-bg').style.cssText).toBe('width: 0%; height: 8px;');
       testComponent.strokeWidth = 6;
       fixture.detectChanges();
-      expect(progress.nativeElement.querySelector('.ant-progress-bg').style.height).toBe('6px');
-      expect(progress.nativeElement.querySelector('.ant-progress-success-bg').style.height).toBe('6px');
+      expect(progress.nativeElement.querySelector('.ant-progress-bg').style.cssText).toBe('width: 0%; height: 6px;');
+      expect(progress.nativeElement.querySelector('.ant-progress-success-bg').style.cssText).toBe('width: 0%; height: 6px;');
     });
     it('should size work', () => {
       fixture.detectChanges();
-      expect(progress.nativeElement.querySelector('.ant-progress-bg').style.height).toBe('8px');
-      expect(progress.nativeElement.querySelector('.ant-progress-success-bg').style.height).toBe('8px');
+      expect(progress.nativeElement.querySelector('.ant-progress-bg').style.cssText).toBe('width: 0%; height: 8px;');
+      expect(progress.nativeElement.querySelector('.ant-progress-success-bg').style.cssText).toBe('width: 0%; height: 8px;');
       testComponent.size = 'small';
       fixture.detectChanges();
       expect(progress.nativeElement.firstElementChild.classList).toContain('ant-progress-small');
-      expect(progress.nativeElement.querySelector('.ant-progress-bg').style.height).toBe('6px');
-      expect(progress.nativeElement.querySelector('.ant-progress-success-bg').style.height).toBe('6px');
-    });
-    it('should strokeLinecap work', () => {
-      fixture.detectChanges();
-      expect(progress.nativeElement.querySelector('.ant-progress-bg').style.borderRadius).toBe('100px');
-      expect(progress.nativeElement.querySelector('.ant-progress-success-bg').style.borderRadius).toBe('100px');
-      testComponent.strokeLinecap = 'square';
-      fixture.detectChanges();
-      expect(progress.nativeElement.querySelector('.ant-progress-bg').style.borderRadius).toBe('0px');
-      expect(progress.nativeElement.querySelector('.ant-progress-success-bg').style.borderRadius).toBe('0px');
-    });
-    it('should strokeColor work', () => {
-      fixture.detectChanges();
-      expect(progress.nativeElement.querySelector('.ant-progress-bg').style.background).toBe('');
-      testComponent.strokeColor = 'blue';
-      fixture.detectChanges();
-      expect(progress.nativeElement.querySelector('.ant-progress-bg').style.background).toBe('blue');
+      expect(progress.nativeElement.querySelector('.ant-progress-bg').style.cssText).toBe('width: 0%; height: 6px;');
+      expect(progress.nativeElement.querySelector('.ant-progress-success-bg').style.cssText).toBe('width: 0%; height: 6px;');
     });
   });
   describe('progress dashboard', () => {
@@ -173,13 +152,6 @@ describe('progress', () => {
       fixture.detectChanges();
       expect(progress.nativeElement.querySelector('.ant-progress-circle-trail').attributes.getNamedItem('stroke-width').value).toBe('10');
     });
-    it('should strokeLinecap work', () => {
-      fixture.detectChanges();
-      expect(progress.nativeElement.querySelector('.ant-progress-circle-path').attributes.getNamedItem('stroke-linecap').value).toBe('round');
-      testComponent.strokeLinecap = 'square';
-      fixture.detectChanges();
-      expect(progress.nativeElement.querySelector('.ant-progress-circle-path').attributes.getNamedItem('stroke-linecap').value).toBe('square');
-    });
   });
   describe('progress circle', () => {
     let fixture;
@@ -218,20 +190,6 @@ describe('progress', () => {
       fixture.detectChanges();
       expect(progress.nativeElement.querySelector('.ant-progress-circle-path').attributes.getNamedItem('d').value).toBe(`M 50,50 m 0,-47\n     a 47,47 0 1 1 0,94\n     a 47,47 0 1 1 0,-94`);
     });
-    it('should strokeLinecap work', () => {
-      fixture.detectChanges();
-      expect(progress.nativeElement.querySelector('.ant-progress-circle-path').attributes.getNamedItem('stroke-linecap').value).toBe('round');
-      testComponent.strokeLinecap = 'square';
-      fixture.detectChanges();
-      expect(progress.nativeElement.querySelector('.ant-progress-circle-path').attributes.getNamedItem('stroke-linecap').value).toBe('square');
-    });
-    it('should strokeColor work', () => {
-      fixture.detectChanges();
-      expect(progress.nativeElement.querySelector('.ant-progress-circle-path').attributes.getNamedItem('stroke').value).toBe('#108ee9');
-      testComponent.strokeColor = 'blue';
-      fixture.detectChanges();
-      expect(progress.nativeElement.querySelector('.ant-progress-circle-path').attributes.getNamedItem('stroke').value).toBe('blue');
-    });
   });
 });
 
@@ -245,9 +203,7 @@ describe('progress', () => {
       [nzStatus]="status"
       [nzShowInfo]="showInfo"
       [nzStrokeWidth]="strokeWidth"
-      [nzPercent]="percent"
-      [nzStrokeColor]="strokeColor"
-      [nzStrokeLinecap]="strokeLinecap">
+      [nzPercent]="percent">
     </nz-progress>
   `
 })
@@ -259,8 +215,6 @@ export class NzTestProgressLineComponent {
   percent = 0;
   successPercent = 0;
   showInfo = true;
-  strokeLinecap = 'round';
-  strokeColor;
 }
 
 @Component({
@@ -273,8 +227,7 @@ export class NzTestProgressLineComponent {
       [nzStatus]="status"
       [nzShowInfo]="showInfo"
       [nzStrokeWidth]="strokeWidth"
-      [nzPercent]="percent"
-      [nzStrokeLinecap]="strokeLinecap">
+      [nzPercent]="percent">
     </nz-progress>
   `
 })
@@ -286,7 +239,6 @@ export class NzTestProgressDashBoardComponent {
   successPercent = 0;
   showInfo = true;
   width = 132;
-  strokeLinecap = 'round';
 }
 
 @Component({
@@ -295,15 +247,11 @@ export class NzTestProgressDashBoardComponent {
     <nz-progress
       nzType="circle"
       [nzGapDegree]="gapDegree"
-      [nzGapPosition]="gapPosition"
-      [nzStrokeColor]="strokeColor"
-      [nzStrokeLinecap]="strokeLinecap">
+      [nzGapPosition]="gapPosition">
     </nz-progress>
   `
 })
 export class NzTestProgressCircleComponent {
   gapDegree;
   gapPosition;
-  strokeLinecap = 'round';
-  strokeColor;
 }

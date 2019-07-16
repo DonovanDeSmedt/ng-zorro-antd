@@ -32,7 +32,7 @@ export class NzTheadComponent implements AfterContentInit, OnDestroy {
 
   @ViewChild('contentTemplate') template: TemplateRef<void>;
   @ContentChildren(NzThComponent, { descendants: true }) listOfNzThComponent: QueryList<NzThComponent>;
-  @Output() readonly nzSortChange = new EventEmitter<{ key: string, value: string }>();
+  @Output() nzSortChange = new EventEmitter<{ key: string, value: string }>();
 
   @Input()
   set nzSingleSort(value: boolean) {

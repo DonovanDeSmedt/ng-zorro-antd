@@ -1,6 +1,7 @@
 import { ENTER } from '@angular/cdk/keycodes';
 import { HttpClient, HttpEvent, HttpEventType, HttpHeaders, HttpRequest, HttpResponse } from '@angular/common/http';
 import {
+  ChangeDetectorRef,
   Component,
   ElementRef,
   HostListener,
@@ -9,11 +10,9 @@ import {
   OnDestroy,
   OnInit,
   Optional,
-  ViewChild,
-  ViewEncapsulation
+  ViewChild
 } from '@angular/core';
-import { of, Observable, Subscription } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { Observable, Subscription } from 'rxjs';
 
 import { NzUpdateHostClassService } from '../core/services/update-host-class.service';
 
@@ -27,8 +26,7 @@ import { UploadFile, UploadXHRArgs, ZipButtonOptions } from './interface';
     '[attr.role]'    : '"button"'
   },
   providers          : [ NzUpdateHostClassService ],
-  preserveWhitespaces: false,
-  encapsulation      : ViewEncapsulation.None
+  preserveWhitespaces: false
 })
 export class NzUploadBtnComponent implements OnInit, OnChanges, OnDestroy {
   reqs: { [ key: string ]: Subscription } = {};
@@ -37,14 +35,14 @@ export class NzUploadBtnComponent implements OnInit, OnChanges, OnDestroy {
 
   @ViewChild('file') file: ElementRef;
 
-  // #region fields
+  // region: fields
   @Input() classes: {} = {};
   @Input() options: ZipButtonOptions;
-  // #endregion
 
+  // endregion
   @HostListener('click')
   onClick(): void {
-    if (this.options.disabled || !this.options.openFileDialogOnClick) {
+    if (this.options.disabled) {
       return;
     }
     (this.file.nativeElement as HTMLInputElement).click();
@@ -90,7 +88,8 @@ export class NzUploadBtnComponent implements OnInit, OnChanges, OnDestroy {
     hie.value = '';
   }
 
-  private traverseFileTree(files: DataTransferItemList): void {
+  // tslint:disable-next-line:no-any
+  private traverseFileTree(files: any): void {
     // tslint:disable-next-line:no-any
     const _traverseFileTree = (item: any, path: string) => {
       if (item.isFile) {
@@ -109,8 +108,7 @@ export class NzUploadBtnComponent implements OnInit, OnChanges, OnDestroy {
         });
       }
     };
-    // tslint:disable-next-line:no-any
-    for (const file of files as any) {
+    for (const file of files) {
       _traverseFileTree(file.webkitGetAsEntry(), '');
     }
   }
@@ -144,20 +142,11 @@ export class NzUploadBtnComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   uploadFiles(fileList: FileList | File[]): void {
-    let filters$: Observable<UploadFile[]> = of(Array.prototype.slice.call(fileList));
-    this.options.filters.forEach(f => {
-      filters$ = filters$.pipe(switchMap(list => {
-        const fnRes = f.fn(list);
-        return fnRes instanceof Observable ? fnRes : of(fnRes);
-      }));
-    });
-    filters$.subscribe(list => {
-      list.forEach((file: UploadFile) => {
-        this.attachUid(file);
-        this.upload(file, list);
-      });
-    }, e => {
-      console.warn(`Unhandled upload filter error`, e);
+    let postFiles: UploadFile[] = Array.prototype.slice.call(fileList);
+    this.options.filters.forEach(f => postFiles = f.fn(postFiles));
+    postFiles.forEach((file: UploadFile) => {
+      this.attachUid(file);
+      this.upload(file, postFiles);
     });
   }
 
@@ -175,8 +164,6 @@ export class NzUploadBtnComponent implements OnInit, OnChanges, OnDestroy {
         } else if (typeof processedFile === 'boolean' && processedFile !== false) {
           this.post(file);
         }
-      }, e => {
-        console.warn(`Unhandled upload beforeUpload error`, e);
       });
     } else if (before !== false) {
       return this.post(file);
@@ -277,22 +264,21 @@ export class NzUploadBtnComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
-  // #region styles
-
+  // region: styles
   private prefixCls = 'ant-upload';
 
-  private setClassMap(): void {
+  setClassMap(): void {
     const classMap = {
       [ this.prefixCls ]              : true,
       [ `${this.prefixCls}-disabled` ]: this.options.disabled,
       ...this.classes
     };
     this.updateHostClassService.updateHostClass(this.el.nativeElement, classMap);
+    this.cd.detectChanges();
   }
 
-  // #endregion
-
-  constructor(@Optional() private http: HttpClient, private el: ElementRef, private updateHostClassService: NzUpdateHostClassService) {
+  // endregion
+  constructor(@Optional() private http: HttpClient, private el: ElementRef, private updateHostClassService: NzUpdateHostClassService, private cd: ChangeDetectorRef) {
     if (!http) {
       throw new Error(`Not found 'HttpClient', You can import 'HttpClientModule' in your root module.`);
     }

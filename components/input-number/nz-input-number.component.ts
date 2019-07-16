@@ -1,72 +1,108 @@
-import { FocusMonitor } from '@angular/cdk/a11y';
-import { DOWN_ARROW, ENTER, UP_ARROW } from '@angular/cdk/keycodes';
+import { DOWN_ARROW, UP_ARROW } from '@angular/cdk/keycodes';
 import {
   forwardRef,
   AfterViewInit,
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   ElementRef,
-  EventEmitter,
+  HostBinding,
   Input,
-  OnChanges,
-  OnDestroy,
-  OnInit,
-  Output,
   Renderer2,
-  SimpleChanges,
-  ViewChild,
-  ViewEncapsulation
+  ViewChild
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { NzSizeLDSType } from '../core/types/size';
 
 import { isNotNil } from '../core/util/check';
-import { InputBoolean } from '../core/util/convert';
+import { toBoolean } from '../core/util/convert';
 
 @Component({
-  selector: 'nz-input-number',
+  selector   : 'nz-input-number',
   templateUrl: './nz-input-number.component.html',
-  providers: [
+  providers  : [
     {
-      provide: NG_VALUE_ACCESSOR,
+      provide    : NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => NzInputNumberComponent),
-      multi: true
+      multi      : true
     }
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  encapsulation: ViewEncapsulation.None,
-  host: {
-    '[class.ant-input-number]': 'true',
-    '[class.ant-input-number-focused]': 'isFocused',
-    '[class.ant-input-number-lg]': `nzSize === 'large'`,
-    '[class.ant-input-number-sm]': `nzSize === 'small'`,
-    '[class.ant-input-number-disabled]': 'nzDisabled'
+  host       : {
+    '[class.ant-input-number]'        : 'true',
+    '[class.ant-input-number-focused]': 'isFocused'
   }
 })
-export class NzInputNumberComponent implements ControlValueAccessor, AfterViewInit, OnChanges, OnInit, OnDestroy {
+export class NzInputNumberComponent implements ControlValueAccessor, AfterViewInit {
+  private isInit = false;
+  private _disabled = false;
+  private _step = 1;
   private autoStepTimer;
-  private actualValue: string | number;
-  private value: string | number;
+  private _autoFocus = false;
+  private _formatter = (value) => value;
   displayValue: string | number;
+  actualValue: string | number;
   isFocused = false;
+  value: string | number;
+  el: HTMLElement = this.elementRef.nativeElement;
+  prefixCls = 'ant-input-number';
   disabledUp = false;
   disabledDown = false;
   onChange: (value: number) => void = () => null;
   onTouched: () => void = () => null;
-  @Output() readonly nzBlur = new EventEmitter();
-  @Output() readonly nzFocus = new EventEmitter();
   @ViewChild('inputElement') inputElement: ElementRef;
-  @Input() nzSize: NzSizeLDSType = 'default';
+  @Input() nzSize: 'small' | 'default' | 'large' = 'default';
   @Input() nzMin: number = -Infinity;
   @Input() nzMax: number = Infinity;
-  @Input() nzParser = value => value;
+  @Input() nzParser = (value) => value;
   @Input() nzPrecision: number;
   @Input() nzPlaceHolder = '';
-  @Input() nzStep = 1;
-  @Input() @InputBoolean() nzDisabled = false;
-  @Input() @InputBoolean() nzAutoFocus = false;
-  @Input() nzFormatter: (value: number) => string | number = value => value;
+
+  @HostBinding('class.ant-input-number-lg')
+  get isLarge(): boolean {
+    return this.nzSize === 'large';
+  }
+
+  @HostBinding('class.ant-input-number-sm')
+  get isSmall(): boolean {
+    return this.nzSize === 'small';
+  }
+
+  @Input()
+  set nzAutoFocus(value: boolean) {
+    this._autoFocus = toBoolean(value);
+    this.updateAutoFocus();
+  }
+
+  get nzAutoFocus(): boolean {
+    return this._autoFocus;
+  }
+
+  @Input()
+  @HostBinding('class.ant-input-number-disabled')
+  set nzDisabled(value: boolean) {
+    this._disabled = toBoolean(value);
+  }
+
+  get nzDisabled(): boolean {
+    return this._disabled;
+  }
+
+  @Input()
+  set nzStep(value: number) {
+    this._step = value;
+  }
+
+  get nzStep(): number {
+    return this._step;
+  }
+
+  @Input()
+  set nzFormatter(v: (value: number) => string | number) {
+    this._formatter = v;
+    const value = this.getCurrentValidValue(this.actualValue);
+    this.writeValue(value);
+  }
+
+  get nzFormatter(): (value: number) => string | number {
+    return this._formatter;
+  }
 
   updateAutoFocus(): void {
     if (this.nzAutoFocus) {
@@ -77,12 +113,7 @@ export class NzInputNumberComponent implements ControlValueAccessor, AfterViewIn
   }
 
   onModelChange(value: string): void {
-    this.actualValue = this.nzParser(
-      value
-        .trim()
-        .replace(/。/g, '.')
-        .replace(/[^\w\.-]+/g, '')
-    );
+    this.actualValue = this.nzParser(value.trim().replace(/。/g, '.').replace(/[^\w\.-]+/g, ''));
     this.inputElement.nativeElement.value = this.actualValue;
   }
 
@@ -133,17 +164,14 @@ export class NzInputNumberComponent implements ControlValueAccessor, AfterViewIn
     return Number(num);
   }
 
-  setValidateValue(): void {
+  onBlur(e: FocusEvent): void {
+    this.onTouched();
+    this.isFocused = false;
     const value = this.getCurrentValidValue(this.actualValue);
     this.setValue(value, `${this.value}` !== `${value}`);
   }
 
-  onBlur(): void {
-    this.isFocused = false;
-    this.setValidateValue();
-  }
-
-  onFocus(): void {
+  onFocus(e: FocusEvent): void {
     this.isFocused = true;
   }
 
@@ -211,7 +239,9 @@ export class NzInputNumberComponent implements ControlValueAccessor, AfterViewIn
     const precision = Math.abs(this.getMaxPrecision(val, rat));
     let result;
     if (typeof val === 'number') {
-      result = ((precisionFactor * val + precisionFactor * this.nzStep * rat) / precisionFactor).toFixed(precision);
+      result =
+        ((precisionFactor * val + precisionFactor * this.nzStep * rat) /
+          precisionFactor).toFixed(precision);
     } else {
       result = this.nzMin === -Infinity ? this.nzStep : this.nzMin;
     }
@@ -223,7 +253,9 @@ export class NzInputNumberComponent implements ControlValueAccessor, AfterViewIn
     const precision = Math.abs(this.getMaxPrecision(val, rat));
     let result;
     if (typeof val === 'number') {
-      result = ((precisionFactor * val - precisionFactor * this.nzStep * rat) / precisionFactor).toFixed(precision);
+      result =
+        ((precisionFactor * val - precisionFactor * this.nzStep * rat) /
+          precisionFactor).toFixed(precision);
     } else {
       result = this.nzMin === -Infinity ? -this.nzStep : this.nzMin;
     }
@@ -255,7 +287,7 @@ export class NzInputNumberComponent implements ControlValueAccessor, AfterViewIn
       return;
     }
     this.autoStepTimer = setTimeout(() => {
-      this[type](e, ratio, true);
+      this[ type ](e, ratio, true);
     }, 600);
   }
 
@@ -266,7 +298,7 @@ export class NzInputNumberComponent implements ControlValueAccessor, AfterViewIn
   }
 
   setValue(value: number, emit: boolean): void {
-    if (emit && `${this.value}` !== `${value}`) {
+    if (emit && (`${this.value}` !== `${value}`)) {
       this.onChange(value);
     }
     this.value = value;
@@ -284,6 +316,7 @@ export class NzInputNumberComponent implements ControlValueAccessor, AfterViewIn
         this.disabledDown = true;
       }
     }
+
   }
 
   onKeyDown(e: KeyboardEvent): void {
@@ -295,18 +328,15 @@ export class NzInputNumberComponent implements ControlValueAccessor, AfterViewIn
       const ratio = this.getRatio(e);
       this.down(e, ratio);
       this.stop();
-    } else if (e.keyCode === ENTER) {
-      this.setValidateValue();
     }
   }
 
-  onKeyUp(): void {
+  onKeyUp(e: KeyboardEvent): void {
     this.stop();
   }
 
   writeValue(value: number): void {
     this.setValue(value, false);
-    this.cdr.markForCheck();
   }
 
   registerOnChange(fn: (_: number) => void): void {
@@ -319,52 +349,23 @@ export class NzInputNumberComponent implements ControlValueAccessor, AfterViewIn
 
   setDisabledState(isDisabled: boolean): void {
     this.nzDisabled = isDisabled;
-    this.cdr.markForCheck();
   }
 
   focus(): void {
-    this.focusMonitor.focusVia(this.inputElement, 'keyboard');
+    this.inputElement.nativeElement.focus();
   }
 
   blur(): void {
     this.inputElement.nativeElement.blur();
   }
 
-  constructor(
-    private elementRef: ElementRef,
-    private renderer: Renderer2,
-    private cdr: ChangeDetectorRef,
-    private focusMonitor: FocusMonitor
-  ) {}
-
-  ngOnInit(): void {
-    this.focusMonitor.monitor(this.elementRef, true).subscribe(focusOrigin => {
-      if (!focusOrigin) {
-        this.nzBlur.emit();
-        Promise.resolve().then(() => this.onTouched());
-      } else {
-        this.nzFocus.emit();
-      }
-    });
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes.nzAutoFocus) {
-      this.updateAutoFocus();
-    }
-    if (changes.nzFormatter) {
-      const value = this.getCurrentValidValue(this.actualValue);
-      this.setValue(value, true);
-    }
+  constructor(private elementRef: ElementRef, private renderer: Renderer2) {
   }
 
   ngAfterViewInit(): void {
-    if (this.nzAutoFocus) {
+    this.isInit = true;
+    if (this._autoFocus) {
       this.focus();
     }
-  }
-
-  ngOnDestroy(): void {
-    this.focusMonitor.stopMonitoring(this.elementRef);
   }
 }

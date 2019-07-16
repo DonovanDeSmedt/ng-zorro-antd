@@ -1,45 +1,72 @@
 import {
   AfterContentInit,
-  ChangeDetectionStrategy,
   Component,
   ContentChildren,
   Input,
-  OnChanges,
   OnDestroy,
   OnInit,
   QueryList,
-  SimpleChanges,
-  TemplateRef,
-  ViewEncapsulation
+  TemplateRef
 } from '@angular/core';
+
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
-import { ClassMap } from '../core/interface/interface';
-import { NzSizeDSType } from '../core/types/size';
 import { toBoolean } from '../core/util/convert';
 
 import { NzStepComponent } from './nz-step.component';
 
 export type NzDirectionType = 'horizontal' | 'vertical';
 export type NzStatusType = 'wait' | 'process' | 'finish' | 'error';
+export type NzSizeType = 'default' | 'small';
 
 @Component({
-  changeDetection    : ChangeDetectionStrategy.OnPush,
-  encapsulation      : ViewEncapsulation.None,
-  preserveWhitespaces: false,
   selector           : 'nz-steps',
+  preserveWhitespaces: false,
   templateUrl        : './nz-steps.component.html'
 })
-export class NzStepsComponent implements OnChanges, OnInit, OnDestroy, AfterContentInit {
+export class NzStepsComponent implements OnInit, OnDestroy, AfterContentInit {
+  private _status: NzStatusType = 'process';
+  private _current = 0;
+  private _size: NzSizeType = 'default';
+  private _direction: NzDirectionType = 'horizontal';
+  private _startIndex = 0;
+  private unsubscribe$ = new Subject<void>();
+
+  stepsClassMap: object;
+  showProcessDot = false;
+  customProcessDotTemplate: TemplateRef<{ $implicit: TemplateRef<void>, status: string, index: number }>;
   @ContentChildren(NzStepComponent) steps: QueryList<NzStepComponent>;
 
-  @Input() nzCurrent = 0;
-  @Input() nzDirection: NzDirectionType = 'horizontal';
-  @Input() nzLabelPlacement: 'horizontal' | 'vertical' = 'horizontal';
-  @Input() nzSize: NzSizeDSType = 'default';
-  @Input() nzStartIndex = 0;
-  @Input() nzStatus: NzStatusType = 'process';
+  @Input() set nzSize(value: NzSizeType) {
+    this._size = value;
+    this.updateClassMap();
+  }
+
+  get nzSize(): NzSizeType {
+    return this._size;
+  }
+
+  @Input()
+  set nzStartIndex(value: number) {
+    this._startIndex = value;
+    this.updateChildrenSteps();
+  }
+
+  get nzStartIndex(): number {
+    return this._startIndex;
+  }
+
+  @Input()
+  set nzDirection(value: NzDirectionType) {
+    this._direction = value;
+    this.updateClassMap();
+    this.updateChildrenSteps();
+  }
+
+  get nzDirection(): NzDirectionType {
+    return this._direction;
+  }
 
   @Input()
   set nzProgressDot(value: boolean | TemplateRef<{ $implicit: TemplateRef<void>, status: string, index: number }>) {
@@ -50,44 +77,42 @@ export class NzStepsComponent implements OnChanges, OnInit, OnDestroy, AfterCont
       this.showProcessDot = toBoolean(value);
     }
     this.updateChildrenSteps();
-  }
-  showProcessDot = false;
-  customProcessDotTemplate: TemplateRef<{ $implicit: TemplateRef<void>, status: string, index: number }>;
-
-  classMap: ClassMap;
-
-  private destroy$ = new Subject<void>();
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes.nzStartIndex || changes.nzDirection || changes.nzStatus || changes.nzCurrent) {
-      this.updateChildrenSteps();
-    }
-    if (changes.nzDirection || changes.nzProgressDot || changes.nzLabelPlacement || changes.nzSize) {
-      this.setClassMap();
-    }
+    this.updateClassMap();
   }
 
-  ngOnInit(): void {
-    this.setClassMap();
+  @Input()
+  set nzStatus(status: NzStatusType) {
+    this._status = status;
     this.updateChildrenSteps();
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
+  get nzStatus(): NzStatusType {
+    return this._status;
   }
 
-  ngAfterContentInit(): void {
+  @Input()
+  set nzCurrent(current: number) {
+    this._current = current;
     this.updateChildrenSteps();
-    if (this.steps) {
-      this.steps.changes.pipe(takeUntil(this.destroy$)).subscribe(this.updateChildrenSteps);
-    }
   }
 
-  private updateChildrenSteps(): void {
+  get nzCurrent(): number {
+    return this._current;
+  }
+
+  updateClassMap(): void {
+    this.stepsClassMap = {
+      [ `ant-steps-${this.nzDirection}` ]: true,
+      [ `ant-steps-label-horizontal` ]   : this.nzDirection === 'horizontal',
+      [ `ant-steps-label-vertical` ]     : this.showProcessDot && (this.nzDirection === 'horizontal'),
+      [ `ant-steps-dot` ]                : this.showProcessDot,
+      [ 'ant-steps-small' ]              : this.nzSize === 'small'
+    };
+  }
+
+  updateChildrenSteps = () => {
     if (this.steps) {
-      const length = this.steps.length;
-      this.steps.toArray().forEach((step, index) => {
+      this.steps.toArray().forEach((step, index, arr) => {
         Promise.resolve().then(() => {
           step.outStatus = this.nzStatus;
           step.showProcessDot = this.showProcessDot;
@@ -97,20 +122,26 @@ export class NzStepsComponent implements OnChanges, OnInit, OnDestroy, AfterCont
           step.direction = this.nzDirection;
           step.index = index + this.nzStartIndex;
           step.currentIndex = this.nzCurrent;
-          step.last = length === index + 1;
-          step.detectChanges();
+          step.last = arr.length === index + 1;
+          step.updateClassMap();
         });
       });
     }
   }
 
-  private setClassMap(): void {
-    this.classMap = {
-      [ `ant-steps-${this.nzDirection}` ]: true,
-      [ `ant-steps-label-horizontal` ]   : this.nzDirection === 'horizontal',
-      [ `ant-steps-label-vertical` ]     : (this.showProcessDot || this.nzLabelPlacement === 'vertical') && this.nzDirection === 'horizontal',
-      [ `ant-steps-dot` ]                : this.showProcessDot,
-      [ 'ant-steps-small' ]              : this.nzSize === 'small'
-    };
+  ngOnInit(): void {
+    this.updateClassMap();
+  }
+
+  ngOnDestroy(): void {
+    this.unsubscribe$.next();
+    this.unsubscribe$.complete();
+  }
+
+  ngAfterContentInit(): void {
+    this.updateChildrenSteps();
+    if (this.steps) {
+       this.steps.changes.pipe(takeUntil(this.unsubscribe$)).subscribe(this.updateChildrenSteps);
+    }
   }
 }

@@ -28,10 +28,10 @@ import { NzDateCellDirective as DateCell, NzDateFullCellDirective as DateFullCel
 })
 export class NzCalendarComponent implements ControlValueAccessor, OnInit {
   @Input() nzMode: 'month'|'year' = 'month';
-  @Output() readonly nzModeChange: EventEmitter<'month'|'year'> = new EventEmitter();
+  @Output() nzModeChange: EventEmitter<'month'|'year'> = new EventEmitter();
 
   @Input() set nzValue(value: Date) { this.updateDate(value, false); }
-  @Output() readonly nzValueChange: EventEmitter<Date> = new EventEmitter();
+  @Output() nzValueChange: EventEmitter<Date> = new EventEmitter();
 
   @Input()
   set nzDateCell(value: TemplateRef<{$implicit: Date}>) { this.dateCell = value; }

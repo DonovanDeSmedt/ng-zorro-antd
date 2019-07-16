@@ -32,7 +32,6 @@ import { Component, ViewEncapsulation } from '@angular/core';
       border-radius: 4px;
       background: #eee;
       display: inline-block;
-      vertical-align: middle;
     }
   ` ]
 })

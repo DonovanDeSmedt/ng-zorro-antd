@@ -56,20 +56,6 @@ export function getNzAutocompleteMissingPanelError(): Error {
 })
 export class NzAutocompleteTriggerDirective implements ControlValueAccessor, OnDestroy {
 
-  /** Bind nzAutocomplete component */
-  @Input() nzAutocomplete: NzAutocompleteComponent;
-
-  _onChange: (value: {}) => void = () => {};
-  _onTouched = () => {};
-  panelOpen: boolean = false;
-
-  /** Current active option */
-  get activeOption(): NzAutocompleteOptionComponent {
-    if (this.nzAutocomplete && this.nzAutocomplete.options.length) {
-      return this.nzAutocomplete.activeItem;
-    }
-  }
-
   private overlayRef: OverlayRef | null;
   private portal: TemplatePortal<{}>;
   private positionStrategy: FlexibleConnectedPositionStrategy;
@@ -79,35 +65,27 @@ export class NzAutocompleteTriggerDirective implements ControlValueAccessor, OnD
   private overlayBackdropClickSubscription: Subscription;
   private overlayPositionChangeSubscription: Subscription;
 
-  constructor(
-    private elementRef: ElementRef,
-    private _overlay: Overlay,
-    private viewContainerRef: ViewContainerRef,
-    // tslint:disable-next-line:no-any
-    @Optional() @Inject(DOCUMENT) private document: any) {
+  _onChange: (value: {}) => void = () => {};
+  _onTouched = () => {};
+
+  panelOpen: boolean = false;
+
+  /** 用于绑定 nzAutocomplete 组件 */
+  @Input() nzAutocomplete: NzAutocompleteComponent;
+
+  /**
+   * 当前被激活的 Option
+   */
+  get activeOption(): NzAutocompleteOptionComponent {
+    if (this.nzAutocomplete && this.nzAutocomplete.options.length) {
+      return this.nzAutocomplete.activeItem;
+    }
   }
 
-  ngOnDestroy(): void {
-    this.destroyPanel();
-  }
-
-  // tslint:disable-next-line:no-any
-  writeValue(value: any): void {
-    this.setTriggerValue(value);
-  }
-
-  registerOnChange(fn: (value: {}) => {}): void {
-    this._onChange = fn;
-  }
-
-  registerOnTouched(fn: () => {}): void {
-    this._onTouched = fn;
-  }
-
-  setDisabledState(isDisabled: boolean): void {
-    const element: HTMLInputElement = this.elementRef.nativeElement;
-    element.disabled = isDisabled;
-    this.closePanel();
+  constructor(private _element: ElementRef, private _overlay: Overlay,
+              private _viewContainerRef: ViewContainerRef,
+              // tslint:disable-next-line:no-any
+              @Optional() @Inject(DOCUMENT) private _document: any) {
   }
 
   openPanel(): void {
@@ -119,77 +97,17 @@ export class NzAutocompleteTriggerDirective implements ControlValueAccessor, OnD
       this.nzAutocomplete.isOpen = this.panelOpen = false;
 
       if (this.overlayRef && this.overlayRef.hasAttached()) {
+        this.overlayRef.detach();
         this.selectionChangeSubscription.unsubscribe();
         this.overlayBackdropClickSubscription.unsubscribe();
         this.overlayPositionChangeSubscription.unsubscribe();
         this.optionsChangeSubscription.unsubscribe();
-        this.overlayRef.detach();
-        this.overlayRef = null;
-        this.portal = null;
       }
     }
-  }
-
-  handleKeydown(event: KeyboardEvent): void {
-    const keyCode = event.keyCode;
-    const isArrowKey = keyCode === UP_ARROW || keyCode === DOWN_ARROW;
-
-    if (keyCode === ESCAPE) {
-      event.preventDefault();
-    }
-
-    if (this.panelOpen && (keyCode === ESCAPE || keyCode === TAB)) {
-      // Reset value when tab / ESC close
-      if (this.activeOption && this.activeOption.getLabel() !== this.previousValue) {
-        this.setTriggerValue(this.previousValue);
-      }
-      this.closePanel();
-    } else if (this.panelOpen && keyCode === ENTER) {
-      event.preventDefault();
-      if (this.nzAutocomplete.showPanel && this.activeOption) {
-        this.activeOption.selectViaInteraction();
-      }
-    } else if (this.panelOpen && isArrowKey && this.nzAutocomplete.showPanel) {
-      event.stopPropagation();
-      if (keyCode === UP_ARROW) {
-        this.nzAutocomplete.setPreviousItemActive();
-      } else {
-        this.nzAutocomplete.setNextItemActive();
-      }
-      if (this.activeOption) {
-        this.activeOption.scrollIntoViewIfNeeded();
-      }
-      this.doBackfill();
-    }
-  }
-
-  handleInput(event: KeyboardEvent): void {
-    const target = event.target as HTMLInputElement;
-    let value: number | string | null = target.value;
-    if (target.type === 'number') {
-      value = value === '' ? null : parseFloat(value);
-    }
-    if (this.canOpen() && document.activeElement === event.target &&
-      this.previousValue !== value) {
-      this.previousValue = value;
-      this._onChange(value);
-      this.openPanel();
-    }
-  }
-
-  handleFocus(): void {
-    if (this.canOpen()) {
-      this.previousValue = this.elementRef.nativeElement.value;
-      this.openPanel();
-    }
-  }
-
-  handleBlur(): void {
-    this._onTouched();
   }
 
   /**
-   * Subscription data source changes event
+   * 订阅数据源改变事件
    */
   private subscribeOptionsChange(): Subscription {
     return this.nzAutocomplete.options.changes.pipe(
@@ -200,7 +118,8 @@ export class NzAutocompleteTriggerDirective implements ControlValueAccessor, OnD
   }
 
   /**
-   * Subscription option changes event and set the value
+   * 订阅 option 选择事件
+   * 并设置值
    */
   private subscribeSelectionChange(): Subscription {
     return this.nzAutocomplete.selectionChange
@@ -210,25 +129,27 @@ export class NzAutocompleteTriggerDirective implements ControlValueAccessor, OnD
   }
 
   /**
-   * Subscription external click and close panel
+   * 订阅组件外部的单击事件
+   * 并关闭弹窗
    */
   private subscribeOverlayBackdropClick(): Subscription {
-    return merge<MouseEvent | TouchEvent>(
-      fromEvent<MouseEvent>(this.document, 'click'),
-      fromEvent<TouchEvent>(this.document, 'touchend')
+    return merge(
+      fromEvent(this._document, 'click'),
+      fromEvent(this._document, 'touchend')
     )
     .subscribe((event: MouseEvent | TouchEvent) => {
       const clickTarget = event.target as HTMLElement;
 
-      // Make sure is not self
-      if (clickTarget !== this.elementRef.nativeElement && !this.overlayRef.overlayElement.contains(clickTarget) && this.panelOpen) {
+      // 确保不是点击组件自身
+      if (clickTarget !== this._element.nativeElement && !this.overlayRef.overlayElement.contains(clickTarget) && this.panelOpen) {
         this.closePanel();
       }
     });
   }
 
   /**
-   * Subscription overlay position changes and reset dropdown position
+   * 订阅 Overlay 位置改变事件
+   * 并重新设置动画方向
    */
   private subscribeOverlayPositionChange(): Subscription {
     return this.positionStrategy.positionChanges
@@ -246,11 +167,8 @@ export class NzAutocompleteTriggerDirective implements ControlValueAccessor, OnD
       throw getNzAutocompleteMissingPanelError();
     }
 
-    if (!this.portal) {
-      this.portal = new TemplatePortal(this.nzAutocomplete.template, this.viewContainerRef);
-    }
-
     if (!this.overlayRef) {
+      this.portal = new TemplatePortal(this.nzAutocomplete.template, this._viewContainerRef);
       this.overlayRef = this._overlay.create(this.getOverlayConfig());
     }
 
@@ -279,6 +197,8 @@ export class NzAutocompleteTriggerDirective implements ControlValueAccessor, OnD
   private destroyPanel(): void {
     if (this.overlayRef) {
       this.closePanel();
+      this.overlayRef.dispose();
+      this.overlayRef = null;
     }
   }
 
@@ -286,13 +206,13 @@ export class NzAutocompleteTriggerDirective implements ControlValueAccessor, OnD
     return new OverlayConfig({
       positionStrategy: this.getOverlayPosition(),
       scrollStrategy  : this._overlay.scrollStrategies.reposition(),
-      // default host element width
+      // 如果没有设置 nzWidth 则使用 Host 元素的宽度
       width           : this.nzAutocomplete.nzWidth || this.getHostWidth()
     });
   }
 
   private getConnectedElement(): ElementRef {
-    return this.elementRef;
+    return this._element;
   }
 
   private getHostWidth(): number {
@@ -320,26 +240,108 @@ export class NzAutocompleteTriggerDirective implements ControlValueAccessor, OnD
     }
   }
 
+  handleKeydown(event: KeyboardEvent): void {
+    const keyCode = event.keyCode;
+    const isArrowKey = keyCode === UP_ARROW || keyCode === DOWN_ARROW;
+
+    if (keyCode === ESCAPE) {
+      event.preventDefault();
+    }
+
+    if (this.panelOpen && (keyCode === ESCAPE || keyCode === TAB)) {
+      // 通过 tab / ESC 关闭，重置输入标签 value
+      if (this.activeOption.getLabel() !== this.previousValue) {
+        this.setTriggerValue(this.previousValue);
+      }
+      this.closePanel();
+    } else if (this.panelOpen && keyCode === ENTER) {
+      event.preventDefault();
+      if (this.nzAutocomplete.showPanel && this.activeOption) {
+        this.activeOption.selectViaInteraction();
+      }
+    } else if (this.panelOpen && isArrowKey && this.nzAutocomplete.showPanel) {
+      event.stopPropagation();
+      if (keyCode === UP_ARROW) {
+        this.nzAutocomplete.setPreviousItemActive();
+      } else {
+        this.nzAutocomplete.setNextItemActive();
+      }
+      if (this.activeOption) {
+        this.activeOption.scrollIntoViewIfNeeded();
+      }
+      this.doBackfill();
+    }
+  }
+
   private setValueAndClose(option: NzAutocompleteOptionComponent): void {
     const value = option.nzValue;
     this.setTriggerValue(option.getLabel());
     this._onChange(value);
-    this.elementRef.nativeElement.focus();
+    this._element.nativeElement.focus();
     this.closePanel();
   }
 
   private setTriggerValue(value: string | number | null): void {
-    this.elementRef.nativeElement.value = value || '';
+    this._element.nativeElement.value = value || '';
   }
 
   private doBackfill(): void {
-    if (this.nzAutocomplete.nzBackfill && this.nzAutocomplete.activeItem) {
+    if (this.nzAutocomplete.nzBackfill) {
+      // 只设置标签显示值
       this.setTriggerValue(this.nzAutocomplete.activeItem.getLabel());
     }
   }
 
+  handleInput(event: KeyboardEvent): void {
+    const target = event.target as HTMLInputElement;
+    let value: number | string | null = target.value;
+    if (target.type === 'number') {
+      value = value === '' ? null : parseFloat(value);
+    }
+    if (this.canOpen() && document.activeElement === event.target &&
+      this.previousValue !== value) {
+      this.previousValue = value;
+      this._onChange(value);
+      this.openPanel();
+    }
+  }
+
+  handleFocus(): void {
+    if (this.canOpen()) {
+      this.previousValue = this._element.nativeElement.value;
+      this.openPanel();
+    }
+  }
+
+  handleBlur(): void {
+    this._onTouched();
+  }
+
   private canOpen(): boolean {
-    const element: HTMLInputElement = this.elementRef.nativeElement;
+    const element: HTMLInputElement = this._element.nativeElement;
     return !element.readOnly && !element.disabled;
+  }
+
+  // tslint:disable-next-line:no-any
+  writeValue(value: any): void {
+    this.setTriggerValue(value);
+  }
+
+  registerOnChange(fn: (value: {}) => {}): void {
+    this._onChange = fn;
+  }
+
+  registerOnTouched(fn: () => {}): void {
+    this._onTouched = fn;
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    const element: HTMLInputElement = this._element.nativeElement;
+    element.disabled = isDisabled;
+    this.closePanel();
+  }
+
+  ngOnDestroy(): void {
+    this.destroyPanel();
   }
 }

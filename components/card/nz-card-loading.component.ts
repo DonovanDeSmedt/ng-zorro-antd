@@ -1,16 +1,13 @@
-import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/core';
+import { Component } from '@angular/core';
 
 @Component({
-  selector           : 'nz-card-loading',
-  templateUrl        : './nz-card-loading.component.html',
-  preserveWhitespaces: false,
-  changeDetection    : ChangeDetectionStrategy.OnPush,
-  encapsulation      : ViewEncapsulation.None,
-  host               : {
+  selector   : 'nz-card-loading',
+  templateUrl: './nz-card-loading.component.html',
+  host       : {
     '[class.ant-card-loading-content]': 'true'
   },
-  styles             : [ `
-    nz-card-loading {
+  styles     : [ `
+    :host {
       display: block;
     }
   ` ]

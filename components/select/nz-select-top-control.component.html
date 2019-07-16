@@ -23,7 +23,7 @@
   <div
     *ngIf="nzListOfSelectedValue.length"
     class="ant-select-selection-selected-value"
-    [attr.title]="singleValueLabel"
+    [attr.title]="nzListOfSelectedValue[0].nzLabel"
     [ngStyle]="selectedValueDisplay">
     {{ singleValueLabel }}
   </div>

@@ -37,7 +37,7 @@ export abstract class AbstractPickerComponent implements OnInit, OnChanges, OnDe
   @Input() nzDropdownClassName: string;
   @Input() nzSize: 'large' | 'small';
   @Input() nzStyle: object;
-  @Output() readonly nzOnOpenChange = new EventEmitter<boolean>();
+  @Output() nzOnOpenChange = new EventEmitter<boolean>();
 
   @Input() nzFormat: string;
 

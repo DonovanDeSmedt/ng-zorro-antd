@@ -1,30 +1,37 @@
-import { Directive, ElementRef, Input, OnChanges, OnInit, Renderer2 } from '@angular/core';
+import { Directive, ElementRef, Input, OnInit, Renderer2 } from '@angular/core';
 import { NzUpdateHostClassService } from '../core/services/update-host-class.service';
 
 @Directive({
   selector : '[nz-form]',
-  providers: [ NzUpdateHostClassService ],
-  host     : {
-    '[class.ant-form]': 'true'
-  }
+  providers: [ NzUpdateHostClassService ]
 })
-export class NzFormDirective implements OnInit, OnChanges {
-  @Input() nzLayout = 'horizontal';
+export class NzFormDirective implements OnInit {
+  el: HTMLElement = this.elementRef.nativeElement;
+  prefixCls = 'ant-form';
+  private _layout = 'horizontal';
+
+  @Input()
+  set nzLayout(value: string) {
+    this._layout = value;
+    this.setClassMap();
+  }
+
+  get nzLayout(): string {
+    return this._layout;
+  }
 
   setClassMap(): void {
-    this.nzUpdateHostClassService.updateHostClass(this.elementRef.nativeElement, {
-      [ `ant-form-${this.nzLayout}` ]: this.nzLayout
-    });
+    const classMap = {
+      [ `${this.prefixCls}` ]                 : true,
+      [ `${this.prefixCls}-${this.nzLayout}` ]: this.nzLayout
+    };
+    this.nzUpdateHostClassService.updateHostClass(this.el, classMap);
   }
 
   constructor(private elementRef: ElementRef, private renderer: Renderer2, private nzUpdateHostClassService: NzUpdateHostClassService) {
   }
 
   ngOnInit(): void {
-    this.setClassMap();
-  }
-
-  ngOnChanges(): void {
     this.setClassMap();
   }
 }

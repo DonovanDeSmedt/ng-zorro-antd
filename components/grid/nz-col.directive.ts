@@ -2,7 +2,8 @@ import {
   Directive,
   ElementRef,
   Host,
-  Optional
+  Optional,
+  Renderer2
 } from '@angular/core';
 
 import { NzUpdateHostClassService } from '../core/services/update-host-class.service';
@@ -16,7 +17,7 @@ import { NzRowDirective } from './nz-row.directive';
   providers: [ NzUpdateHostClassService ]
 })
 export class NzColDirective extends NzColComponent {
-  constructor(nzUpdateHostClassService: NzUpdateHostClassService, elementRef: ElementRef, @Optional() @Host() nzRowComponent: NzRowComponent, @Optional() @Host() nzRowDirective: NzRowDirective) {
-    super(nzUpdateHostClassService, elementRef, nzRowComponent, nzRowDirective);
+  constructor(nzUpdateHostClassService: NzUpdateHostClassService, elementRef: ElementRef, @Optional() @Host() nzRowComponent: NzRowComponent, @Optional() @Host() nzRowDirective: NzRowDirective, renderer: Renderer2) {
+    super(nzUpdateHostClassService, elementRef, nzRowComponent, nzRowDirective, renderer);
   }
 }

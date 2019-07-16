@@ -50,7 +50,6 @@
   >
     <div
       style="overflow: auto"
-      [id]="idClass"
       nz-option-container
       [listOfNzOptionComponent]="listOfNzOptionComponent"
       [listOfNzOptionGroupComponent]="listOfNzOptionGroupComponent"
@@ -61,6 +60,7 @@
       [nzNotFoundContent]="nzNotFoundContent"
       [nzMaxMultipleCount]="nzMaxMultipleCount"
       [nzMode]="nzMode"
+      [id]="idClass"
       (nzScrollToBottom)="nzScrollToBottom.emit()"
       (nzClickOption)="onClickOptionFromOptionContainer()"
       (nzListOfTemplateOptionChange)="listOfTemplateOptionChange($event)"

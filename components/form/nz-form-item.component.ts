@@ -1,48 +1,25 @@
-import { MediaMatcher } from '@angular/cdk/layout';
-import { Platform } from '@angular/cdk/platform';
-import {
-  AfterContentInit,
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  Component,
-  ContentChildren,
-  ElementRef,
-  Input,
-  NgZone,
-  OnDestroy,
-  QueryList,
-  Renderer2,
-  ViewEncapsulation
-} from '@angular/core';
-import { takeUntil } from 'rxjs/operators';
+import { Component, ElementRef, Input, Renderer2 } from '@angular/core';
 import { NzUpdateHostClassService } from '../core/services/update-host-class.service';
 import { toBoolean } from '../core/util/convert';
 import { NzRowComponent } from '../grid/nz-row.component';
-import { NzFormExplainComponent } from './nz-form-explain.component';
 
 /** should add nz-row directive to host, track https://github.com/angular/angular/issues/8785 **/
 @Component({
   selector           : 'nz-form-item',
   preserveWhitespaces: false,
-  changeDetection    : ChangeDetectionStrategy.OnPush,
-  encapsulation      : ViewEncapsulation.None,
   providers          : [ NzUpdateHostClassService ],
   templateUrl        : './nz-form-item.component.html',
   host               : {
     '[class.ant-form-item]'          : 'true',
-    '[class.ant-form-item-with-help]': 'listOfNzFormExplainComponent && (listOfNzFormExplainComponent.length>0)'
+    '[class.ant-form-item-with-help]': 'withHelp>0'
   },
-  styles             : [
-      `
-      nz-form-item {
-        display: block;
-      }
-    `
-  ]
+  styles             : [ `:host {
+    display: block;
+  }` ]
 })
-export class NzFormItemComponent extends NzRowComponent implements AfterContentInit, OnDestroy {
+export class NzFormItemComponent extends NzRowComponent {
   private _flex = false;
-  @ContentChildren(NzFormExplainComponent, { descendants: true }) listOfNzFormExplainComponent: QueryList<NzFormExplainComponent>;
+  withHelp = 0;
 
   @Input()
   set nzFlex(value: boolean) {
@@ -54,15 +31,15 @@ export class NzFormItemComponent extends NzRowComponent implements AfterContentI
     }
   }
 
-  constructor(elementRef: ElementRef, renderer: Renderer2, nzUpdateHostClassService: NzUpdateHostClassService, mediaMatcher: MediaMatcher, ngZone: NgZone, platform: Platform, private cdr: ChangeDetectorRef) {
-    super(elementRef, renderer, nzUpdateHostClassService, mediaMatcher, ngZone, platform);
+  enableHelp(): void {
+    this.withHelp++;
   }
 
-  ngAfterContentInit(): void {
-    if (this.listOfNzFormExplainComponent) {
-      this.listOfNzFormExplainComponent.changes.pipe(takeUntil(this.destroy$)).subscribe(() => {
-        this.cdr.markForCheck();
-      });
-    }
+  disableHelp(): void {
+    this.withHelp--;
+  }
+
+  constructor(elementRef: ElementRef, renderer: Renderer2, nzUpdateHostClassService: NzUpdateHostClassService) {
+    super(elementRef, renderer, nzUpdateHostClassService);
   }
 }

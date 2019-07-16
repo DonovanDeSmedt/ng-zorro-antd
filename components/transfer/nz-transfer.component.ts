@@ -1,53 +1,43 @@
 import {
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
+  ElementRef,
   EventEmitter,
   Input,
   OnChanges,
   OnDestroy,
   OnInit,
   Output,
-  QueryList,
   SimpleChanges,
-  TemplateRef,
-  ViewChildren,
-  ViewEncapsulation
+  TemplateRef
 } from '@angular/core';
 
 import { of, Observable, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
-import { InputBoolean } from '../core/util/convert';
+import { toBoolean } from '../core/util/convert';
 import { NzI18nService } from '../i18n/nz-i18n.service';
 
 import { TransferCanMove, TransferChange, TransferItem, TransferSearchChange, TransferSelectChange } from './interface';
-import { NzTransferListComponent } from './nz-transfer-list.component';
 
 @Component({
   selector           : 'nz-transfer',
   preserveWhitespaces: false,
   templateUrl        : './nz-transfer.component.html',
   host               : {
-    '[class.ant-transfer]': 'true',
-    '[class.ant-transfer-disabled]': 'nzDisabled'
-  },
-  encapsulation      : ViewEncapsulation.None,
-  changeDetection    : ChangeDetectionStrategy.OnPush
+    '[class.ant-transfer]': 'true'
+  }
 })
 export class NzTransferComponent implements OnInit, OnChanges, OnDestroy {
   private unsubscribe$ = new Subject<void>();
-  @ViewChildren(NzTransferListComponent)
-  private lists !: QueryList<NzTransferListComponent>;
   // tslint:disable-next-line:no-any
   locale: any = {};
+  private _showSearch = false;
 
   leftFilter = '';
   rightFilter = '';
 
-  // #region fields
+  // region: fields
 
-  @Input() @InputBoolean() nzDisabled = false;
   @Input() nzDataSource: TransferItem[] = [];
   @Input() nzTitles: string[] = [ '', '' ];
   @Input() nzOperations: string[] = [];
@@ -57,19 +47,29 @@ export class NzTransferComponent implements OnInit, OnChanges, OnDestroy {
   @Input() nzCanMove: (arg: TransferCanMove) => Observable<TransferItem[]> = (arg: TransferCanMove) => of(arg.list);
   @Input() nzRender: TemplateRef<void>;
   @Input() nzFooter: TemplateRef<void>;
-  @Input() @InputBoolean() nzShowSearch = false;
+
+  // search
+  @Input()
+  set nzShowSearch(value: boolean) {
+    this._showSearch = toBoolean(value);
+  }
+
+  get nzShowSearch(): boolean {
+    return this._showSearch;
+  }
+
   @Input() nzFilterOption: (inputValue: string, item: TransferItem) => boolean;
   @Input() nzSearchPlaceholder: string;
   @Input() nzNotFoundContent: string;
 
   // events
-  @Output() readonly nzChange: EventEmitter<TransferChange> = new EventEmitter();
-  @Output() readonly nzSearchChange: EventEmitter<TransferSearchChange> = new EventEmitter();
-  @Output() readonly nzSelectChange: EventEmitter<TransferSelectChange> = new EventEmitter();
+  @Output() nzChange: EventEmitter<TransferChange> = new EventEmitter();
+  @Output() nzSearchChange: EventEmitter<TransferSearchChange> = new EventEmitter();
+  @Output() nzSelectChange: EventEmitter<TransferSelectChange> = new EventEmitter();
 
-  // #endregion
+  // endregion
 
-  // #region process data
+  // region: process data
 
   // left
   leftDataSource: TransferItem[] = [];
@@ -109,9 +109,9 @@ export class NzTransferComponent implements OnInit, OnChanges, OnDestroy {
     this.nzSearchChange.emit(ret);
   }
 
-  // #endregion
+  // endregion
 
-  // #region operation
+  // region: operation
 
   leftActive = false;
   rightActive = false;
@@ -150,26 +150,15 @@ export class NzTransferComponent implements OnInit, OnChanges, OnDestroy {
       to  : direction,
       list
     });
-    this.markForCheckAllList();
   }
 
-  // #endregion
+  // endregion
 
-  constructor(private cdr: ChangeDetectorRef, private i18n: NzI18nService) {
-  }
-
-  private markForCheckAllList(): void {
-    if (!this.lists) {
-      return ;
-    }
-    this.lists.forEach(i => i.markForCheck());
+  constructor(private i18n: NzI18nService, private el: ElementRef) {
   }
 
   ngOnInit(): void {
-    this.i18n.localeChange.pipe(takeUntil(this.unsubscribe$)).subscribe(() => {
-      this.locale = this.i18n.getLocaleData('Transfer');
-      this.markForCheckAllList();
-    });
+    this.i18n.localeChange.pipe(takeUntil(this.unsubscribe$)).subscribe(() => this.locale = this.i18n.getLocaleData('Transfer'));
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -177,8 +166,6 @@ export class NzTransferComponent implements OnInit, OnChanges, OnDestroy {
       this.splitDataSource();
       this.updateOperationStatus('left');
       this.updateOperationStatus('right');
-      this.cdr.detectChanges();
-      this.markForCheckAllList();
     }
   }
 

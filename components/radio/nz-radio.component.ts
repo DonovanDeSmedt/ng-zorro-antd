@@ -1,60 +1,84 @@
-import { FocusMonitor } from '@angular/cdk/a11y';
 import { DOCUMENT } from '@angular/common';
 import {
   forwardRef,
   AfterViewInit,
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   ElementRef,
   HostListener,
   Inject,
   Input,
-  OnChanges,
+  OnInit,
+  Optional,
   Renderer2,
-  SimpleChanges,
-  ViewChild,
-  ViewEncapsulation
+  ViewChild
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Subject } from 'rxjs';
-import { InputBoolean } from '../core/util/convert';
+
+import { toBoolean } from '../core/util/convert';
+
+import { NzRadioGroupComponent } from './nz-radio-group.component';
 
 @Component({
   selector           : '[nz-radio]',
   preserveWhitespaces: false,
   templateUrl        : './nz-radio.component.html',
-  encapsulation      : ViewEncapsulation.None,
-  changeDetection    : ChangeDetectionStrategy.OnPush,
+  host               : {
+    '[class.ant-radio-wrapper]'         : 'true',
+    '[class.ant-radio-wrapper-checked]' : 'nzChecked',
+    '[class.ant-radio-wrapper-disabled]': 'nzDisabled'
+  },
   providers          : [
     {
       provide    : NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => NzRadioComponent),
       multi      : true
     }
-  ],
-  host               : {
-    '[class.ant-radio-wrapper]'         : 'true',
-    '[class.ant-radio-wrapper-checked]' : 'checked',
-    '[class.ant-radio-wrapper-disabled]': 'nzDisabled'
-  }
+  ]
 })
-export class NzRadioComponent implements ControlValueAccessor, AfterViewInit, OnChanges {
-  select$ = new Subject<NzRadioComponent>();
-  touched$ = new Subject<void>();
-  checked = false;
+export class NzRadioComponent implements OnInit, ControlValueAccessor, AfterViewInit {
+  private _checked = false;
+  private _disabled = false;
+  private _autoFocus = false;
+  isInit = false;
+  classMap;
   name: string;
-  isNgModel = false;
+  prefixCls = 'ant-radio';
+  @ViewChild('inputElement') inputElement: ElementRef;
   onChange: (_: boolean) => void = () => null;
   onTouched: () => void = () => null;
-  @ViewChild('inputElement') inputElement: ElementRef;
-  /* tslint:disable-next-line:no-any */
-  @Input() nzValue: any;
-  @Input() @InputBoolean() nzDisabled = false;
-  @Input() @InputBoolean() nzAutoFocus = false;
+  @Input() nzValue: string;
+
+  set nzChecked(value: boolean) {
+    this._checked = toBoolean(value);
+    this.setClassMap();
+  }
+
+  get nzChecked(): boolean {
+    return this._checked;
+  }
+
+  @Input()
+  set nzDisabled(value: boolean) {
+    this._disabled = toBoolean(value);
+    this.setClassMap();
+  }
+
+  get nzDisabled(): boolean {
+    return this._disabled;
+  }
+
+  @Input()
+  set nzAutoFocus(value: boolean) {
+    this._autoFocus = toBoolean(value);
+    this.updateAutoFocus();
+  }
+
+  get nzAutoFocus(): boolean {
+    return this._autoFocus;
+  }
 
   updateAutoFocus(): void {
-    if (this.inputElement) {
+    if (this.isInit) {
       if (this.nzAutoFocus) {
         this.renderer.setAttribute(this.inputElement.nativeElement, 'autofocus', 'autofocus');
       } else {
@@ -63,46 +87,86 @@ export class NzRadioComponent implements ControlValueAccessor, AfterViewInit, On
     }
   }
 
-  @HostListener('click')
-  onClick(): void {
-    this.focus();
-    if (!this.nzDisabled && !this.checked) {
-      this.select$.next(this);
-      if (this.isNgModel) {
-        this.checked = true;
-        this.onChange(true);
+  updateInputFocus(): void {
+    if (this.inputElement) {
+      if (this.nzChecked) {
+        if (this.document.activeElement.nodeName === 'BODY') {
+          this.inputElement.nativeElement.focus();
+        }
+      } else {
+        this.inputElement.nativeElement.blur();
       }
     }
   }
 
+  @HostListener('click', [ '$event' ])
+  onClick(e: MouseEvent): void {
+    e.preventDefault();
+    this.setClassMap();
+    if (this.nzDisabled || this.nzChecked) {
+      this.updateInputFocus();
+      return;
+    } else {
+      if (this.nzRadioGroup) {
+        this.nzRadioGroup.selectRadio(this);
+      } else {
+        this.updateValue(true);
+      }
+      this.updateInputFocus();
+    }
+  }
+
+  onBlur(): void {
+    this.onTouched();
+    if (this.nzRadioGroup) {
+      this.nzRadioGroup.onTouched();
+    }
+  }
+
+  setClassMap(): void {
+    this.classMap = {
+      [ this.prefixCls ]              : true,
+      [ `${this.prefixCls}-checked` ] : this.nzChecked,
+      [ `${this.prefixCls}-disabled` ]: this.nzDisabled
+    };
+  }
+
   focus(): void {
-    this.focusMonitor.focusVia(this.inputElement, 'keyboard');
+    this.inputElement.nativeElement.focus();
   }
 
   blur(): void {
     this.inputElement.nativeElement.blur();
-  }
-
-  markForCheck(): void {
-    this.cdr.markForCheck();
+    this.onBlur();
   }
 
   /* tslint:disable-next-line:no-any */
-  constructor(private elementRef: ElementRef, private renderer: Renderer2, @Inject(DOCUMENT) private document: any, private cdr: ChangeDetectorRef, private focusMonitor: FocusMonitor) {
+  constructor(@Optional() public nzRadioGroup: NzRadioGroupComponent, private renderer: Renderer2, @Inject(DOCUMENT) private document: any) {
+  }
+
+  ngOnInit(): void {
+    if (this.nzRadioGroup) {
+      this.nzRadioGroup.addRadio(this);
+    }
+    this.setClassMap();
+  }
+
+  updateValue(value: boolean): void {
+    this.onChange(value);
+    this.nzChecked = value;
+    this.setClassMap();
   }
 
   setDisabledState(isDisabled: boolean): void {
     this.nzDisabled = isDisabled;
-    this.cdr.markForCheck();
   }
 
   writeValue(value: boolean): void {
-    this.checked = value;
-    this.cdr.markForCheck();
+    this.nzChecked = value;
+    this.setClassMap();
   }
 
   registerOnChange(fn: (_: boolean) => {}): void {
-    this.isNgModel = true;
     this.onChange = fn;
   }
 
@@ -111,18 +175,8 @@ export class NzRadioComponent implements ControlValueAccessor, AfterViewInit, On
   }
 
   ngAfterViewInit(): void {
-    this.focusMonitor.monitor(this.elementRef, true).subscribe(focusOrigin => {
-      if (!focusOrigin) {
-        Promise.resolve().then(() => this.onTouched());
-        this.touched$.next();
-      }
-    });
+    this.isInit = true;
     this.updateAutoFocus();
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes.nzAutoFocus) {
-      this.updateAutoFocus();
-    }
+    this.updateInputFocus();
   }
 }

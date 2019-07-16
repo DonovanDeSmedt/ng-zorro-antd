@@ -1,12 +1,9 @@
 import { DOCUMENT } from '@angular/common';
 import { HttpBackend } from '@angular/common/http';
-import { Inject, Injectable, InjectionToken, Optional, RendererFactory2 } from '@angular/core';
+import { isDevMode, Inject, Injectable, InjectionToken, Optional, RendererFactory2 } from '@angular/core';
 import { IconDefinition, IconService } from '@ant-design/icons-angular';
 import {
-  BarsOutline,
   CalendarOutline,
-  CaretDownFill,
-  CaretDownOutline,
   CheckCircleFill,
   CheckCircleOutline,
   CheckOutline,
@@ -17,13 +14,8 @@ import {
   DoubleLeftOutline,
   DoubleRightOutline,
   DownOutline,
-  EllipsisOutline,
   ExclamationCircleFill,
-  ExclamationCircleOutline,
-  EyeOutline,
-  FileFill,
-  FileOutline,
-  FilterFill,
+  ExclamationCircleOutline, FilterFill,
   InfoCircleFill,
   InfoCircleOutline,
   LeftOutline,
@@ -31,7 +23,6 @@ import {
   PaperClipOutline,
   QuestionCircleOutline,
   RightOutline,
-  SearchOutline,
   UploadOutline,
   UpOutline
 } from '@ant-design/icons-angular/icons';
@@ -43,39 +34,6 @@ export interface NzIconfontOption {
 export const NZ_ICONS = new InjectionToken('nz_icons');
 export const NZ_ICON_DEFAULT_TWOTONE_COLOR = new InjectionToken('nz_icon_default_twotone_color');
 export const DEFAULT_TWOTONE_COLOR = '#1890ff';
-export const NZ_ICONS_USED_BY_ZORRO: IconDefinition[] = [
-  BarsOutline,
-  CalendarOutline,
-  CaretDownFill,
-  CaretDownOutline,
-  CheckCircleFill,
-  CheckCircleOutline,
-  CheckOutline,
-  ClockCircleOutline,
-  CloseCircleOutline,
-  CloseCircleFill,
-  CloseOutline,
-  DoubleLeftOutline,
-  DoubleRightOutline,
-  DownOutline,
-  EllipsisOutline,
-  ExclamationCircleFill,
-  ExclamationCircleOutline,
-  EyeOutline,
-  FileFill,
-  FileOutline,
-  FilterFill,
-  InfoCircleFill,
-  InfoCircleOutline,
-  LeftOutline,
-  LoadingOutline,
-  PaperClipOutline,
-  QuestionCircleOutline,
-  RightOutline,
-  SearchOutline,
-  UploadOutline,
-  UpOutline
-];
 
 /**
  * It should be a global singleton, otherwise registered icons could not be found.
@@ -84,25 +42,11 @@ export const NZ_ICONS_USED_BY_ZORRO: IconDefinition[] = [
   providedIn: 'root'
 })
 export class NzIconService extends IconService {
-  private iconfontCache = new Set<string>();
-  private warnedAboutAPI = false;
-  private warnedAboutCross = false;
-  private warnedAboutVertical = false;
+  private _iconfontCache = new Set<string>();
 
-  warnAPI(type: 'old' | 'cross' | 'vertical'): void {
-    if (type === 'old' && !this.warnedAboutAPI) {
-      console.warn(`<i class="anticon"></i> would be deprecated soon. Please use <i nz-icon type=""></i> API.`);
-      this.warnedAboutAPI = true;
-    }
-    if (type === 'cross' && !this.warnedAboutCross) {
-      console.warn(`'cross' icon is replaced by 'close' icon.`);
-      this.warnedAboutCross = true;
-    }
-    if (type === 'vertical' && !this.warnedAboutVertical) {
-      console.warn(`'verticle' is misspelled, would be corrected in the next major version.`);
-      this.warnedAboutVertical = true;
-    }
-  }
+  warnedAboutAPI = false;
+  warnedAboutCross = false; // TODO: remove in 2.0
+  warnedAboutVertical = false;
 
   normalizeSvgElement(svg: SVGElement): void {
     if (!svg.getAttribute('viewBox')) {
@@ -119,12 +63,12 @@ export class NzIconService extends IconService {
 
   fetchFromIconfont(opt: NzIconfontOption): void {
     const { scriptUrl } = opt;
-    if (this.document && !this.iconfontCache.has(scriptUrl)) {
+    if (this._document && !this._iconfontCache.has(scriptUrl)) {
       const script = this._renderer.createElement('script');
       this._renderer.setAttribute(script, 'src', scriptUrl);
       this._renderer.setAttribute(script, 'data-namespace', scriptUrl.replace(/^(https?|http):/g, ''));
-      this._renderer.appendChild(this.document.body, script);
-      this.iconfontCache.add(scriptUrl);
+      this._iconfontCache.add(scriptUrl);
+      this._renderer.appendChild(this._document.body, script);
     }
   }
 
@@ -132,24 +76,51 @@ export class NzIconService extends IconService {
     return this._createSVGElementFromString(`<svg><use xlink:href="${type}"></svg>`);
   }
 
+  // tslint:disable:no-any
   constructor(
-    protected rendererFactory: RendererFactory2,
-    @Optional() protected handler: HttpBackend,
-    // tslint:disable-next-line:no-any
-    @Optional() @Inject(DOCUMENT) protected document: any,
-    @Optional() @Inject(NZ_ICONS) private icons: IconDefinition[],
-    @Optional() @Inject(NZ_ICON_DEFAULT_TWOTONE_COLOR) private defaultColor: string
+    protected _rendererFactory: RendererFactory2,
+    @Optional() protected _handler: HttpBackend,
+    @Optional() @Inject(DOCUMENT) protected _document: any,
+    @Optional() @Inject(NZ_ICONS) private _icons: IconDefinition[],
+    @Optional() @Inject(NZ_ICON_DEFAULT_TWOTONE_COLOR) private _defaultColor: string
   ) {
-    super(rendererFactory, handler, document);
+    super(_rendererFactory, _handler, _document);
 
-    this.addIcon(...NZ_ICONS_USED_BY_ZORRO, ...(this.icons || []));
+    const iconsUsedByZorro: IconDefinition[] = [
+      CalendarOutline,
+      CheckCircleFill,
+      CheckCircleOutline,
+      CheckOutline,
+      ClockCircleOutline,
+      CloseCircleOutline,
+      CloseCircleFill,
+      CloseOutline,
+      DoubleLeftOutline,
+      DoubleRightOutline,
+      DownOutline,
+      ExclamationCircleFill,
+      ExclamationCircleOutline,
+      FilterFill,
+      InfoCircleFill,
+      InfoCircleOutline,
+      LeftOutline,
+      LoadingOutline,
+      PaperClipOutline,
+      QuestionCircleOutline,
+      RightOutline,
+      UploadOutline,
+      UpOutline
+    ];
+    this.addIcon(...iconsUsedByZorro);
+
+    if (this._icons) { this.addIcon(...this._icons); }
 
     let primaryColor = DEFAULT_TWOTONE_COLOR;
-    if (this.defaultColor) {
-      if (this.defaultColor.startsWith('#')) {
-        primaryColor = this.defaultColor;
+    if (this._defaultColor) {
+      if (this._defaultColor.startsWith('#')) {
+        primaryColor = this._defaultColor;
       } else {
-        console.warn('[NG-ZORRO]: twotone color must be a hex color!');
+        if (isDevMode()) { console.error('[NG-ZORRO] twotone color must be a hex color!'); }
       }
     }
     this.twoToneColor = { primaryColor };

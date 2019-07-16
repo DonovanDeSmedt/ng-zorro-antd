@@ -1,5 +1,3 @@
-import { Schema as ComponentSchema } from '@schematics/angular/component/schema';
+import {Schema as ComponentSchema} from '@schematics/angular/component/schema';
 
-export interface Schema extends ComponentSchema {
-  [key: string]: string | boolean;
-}
+export interface Schema extends ComponentSchema {}
